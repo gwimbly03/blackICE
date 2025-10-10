@@ -5,46 +5,42 @@ from core.logger import log_info, log_error
 MODULES_DIR = "modules"
 
 class PentestEngine:
-    def __init__(self, target):
-        """
-        Initialize the engine with a target (IP/domain)
-        """
-        self.target = target
+    def __init__(self):
         self.modules = {}
 
     def discover_modules(self):
-        """
-        Discover all Python modules in the modules/ folder
-        """
         log_info("Discovering modules...")
         for file in os.listdir(MODULES_DIR):
             if file.endswith(".py") and file != "__init__.py":
                 module_name = file[:-3]
                 try:
                     module = importlib.import_module(f"modules.{module_name}")
-                    self.modules[module_name] = module
-                    log_info(f"Loaded module: {module_name}")
+                    
+                    module_class = None
+                    for attr_name in dir(module):
+                        attr = getattr(module, attr_name)
+                        if (isinstance(attr, type) and  
+                            hasattr(attr, 'run') and 
+                            hasattr(attr, 'description')):
+                            module_class = attr
+                            break
+                    
+                    if module_class:
+                        module_instance = module_class()
+                        self.modules[module_name] = module_instance
+                        log_info(f"Loaded module: {module_name}")
+                    else:
+                        log_error(f"Module {module_name} has no valid class with 'run' method")
+                        
                 except Exception as e:
                     log_error(f"Failed to load {module_name}: {e}")
 
     def run_module(self, module_name):
-        """
-        Run a specific module by name
-        """
         if module_name in self.modules:
             try:
-                log_info(f"Running module: {module_name} on target: {self.target}")
-                self.modules[module_name].run(self.target)
+                log_info(f"Running module: {module_name}")
+                self.modules[module_name].run()
             except Exception as e:
                 log_error(f"Error running {module_name}: {e}")
         else:
             log_error(f"Module {module_name} not found")
-
-    def run_all(self):
-        """
-        Run all discovered modules
-        """
-        log_info("Running all modules...")
-        for module_name in self.modules:
-            self.run_module(module_name)
-
