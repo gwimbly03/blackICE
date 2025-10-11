@@ -4,6 +4,10 @@ from threading import Thread, Lock
 from core.logger import log_info, log_error
 
 class PortScanner:
+    """
+    port scanner scans a target host for open tcp ports and tries to grab the service and banners 
+    """
+
     description = "Port Scanner to find open ports and services and grab their banners"
     
     def __init__(self):
@@ -18,6 +22,10 @@ class PortScanner:
         }
 
     def grab_rdp_version(self, target, port=3389):
+        """
+        This grabs rdp banner and tries to guess the rdp version based on the response from the targeted host
+
+        """
         try:
             sock = socket.socket()
             sock.settimeout(2)
@@ -57,6 +65,9 @@ class PortScanner:
             return f"RDP (unable to negotiate: {str(e)})"
 
     def grab_ssh_banner(self, sock):
+        """
+        Grabs ssh banner from the open socket
+        """
         try:
             banner = sock.recv(1024).decode(errors='ignore').strip()
             return banner
@@ -64,6 +75,9 @@ class PortScanner:
             return "SSH (no banner received)"
 
     def grab_http_banner(self, sock, port, service):
+        """
+        Grabs http banner sends a head request and then parses server header for http/https
+        """
         try:
             if service == "https":
                 sock.sendall(b"HEAD / HTTP/1.0\r\nHost: example.com\r\n\r\n")
@@ -80,6 +94,9 @@ class PortScanner:
             return "HTTP (no response)"
 
     def grab_ftp_banner(self, sock):
+        """
+        Grabs the ftp banner from open socket
+        """
         try:
             banner = sock.recv(1024).decode(errors='ignore').strip()
             return banner
@@ -87,6 +104,9 @@ class PortScanner:
             return "FTP (no banner)"
 
     def grab_smtp_banner(self, sock):
+        """
+        Reads the smpt greeting then send a ehlo and get the first response line to return the banner
+        """
         try:
             banner = sock.recv(1024).decode(errors='ignore').strip()
             sock.sendall(b"EHLO example.com\r\n")
@@ -96,6 +116,9 @@ class PortScanner:
             return "SMTP (no banner)"
 
     def grab_mysql_banner(self, sock):
+        """
+        Grab the sql banner by reading the sql handshake on the socket then return it as text
+        """
         try:
             banner = sock.recv(1024).decode(errors='ignore').strip()
             return banner
@@ -103,6 +126,9 @@ class PortScanner:
             return "MySQL (no banner)"
 
     def grab_generic_banner(self, sock):
+        """
+        Grabs a generic banner running for a service from open socket
+        """
         try:
             sock.settimeout(2)
             banner = sock.recv(1024).decode(errors='ignore').strip()
@@ -111,6 +137,9 @@ class PortScanner:
             return "no banner"
 
     def grab_banner(self, target, port, service):
+        """
+        opens a tcp connection yo the target host ip and port then call the banner function for the correct service
+        """
         try:
             sock = socket.socket()
             sock.settimeout(3)
@@ -142,6 +171,9 @@ class PortScanner:
             return f"error: {str(e)}"
 
     def scan_port(self, target, port):
+        """
+        This will check a tcp port on the target ip to see if its open, if it is then it grabs the banner
+        """
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(1)
@@ -161,7 +193,9 @@ class PortScanner:
             log_error(f"Error scanning port {port}: {e}")
 
     def run(self):
-        
+        """
+        Asks for the user to input an ip and a port range then starts the port scan it uses multi threading, it allows the user to specify a port range once the scan finishs it outputs the service and the grabed banner of said service 
+        """
         target = input("Enter target IP: ").strip()
 
         if not target:

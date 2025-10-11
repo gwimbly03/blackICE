@@ -13,9 +13,15 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 
 class GatewayScanner:
+    """
+    This module asks the user to input the gateway of a network then scans the network for all the hosts connected, returns the IP and MAC address. It does this my using ping to the network for IP and arp, arping and /proc/net/arp to resolve the MAC address for the hosts 
+    """
     description = "Scans the gateway to see all the hosts connected, returns the IP and MAC"
     
     def __init__(self):
+        """
+        Start the GatewayScanner and configure the logger
+        """
         self.logger = self._setup_logger()
         self.gateway_ip = None
         self.network_range = None
@@ -25,6 +31,9 @@ class GatewayScanner:
         self.max_workers = 50
 
     def _setup_logger(self):
+        """
+        Creates the logger for the scanner 
+        """
         logger = logging.getLogger("gateway_scanner")
         if not logger.handlers:
             h = logging.StreamHandler()
@@ -35,6 +44,9 @@ class GatewayScanner:
         return logger
 
     def set_gateway(self, gateway_ip: str) -> None:
+        """
+        Trys the check the IP of the gateway if it can find it then it will throw an error
+        """
         try:
             ipaddress.ip_address(gateway_ip)
             self.gateway_ip = gateway_ip
@@ -42,6 +54,9 @@ class GatewayScanner:
             raise ValueError(f"Invalid gateway IP: {gateway_ip}") from e
 
     def calculate_network_range(self) -> str:
+        """
+        Tries to find the /24 network range from the gateway IP. It throws an error if the gateway ip is not set properly
+        """
         if not self.gateway_ip:
             raise ValueError("Gateway IP not set. Call set_gateway() first.")
             
@@ -63,7 +78,9 @@ class GatewayScanner:
         return self.network_range
 
     def _ping_host(self, ip: str) -> Optional[Dict[str, str]]:
-        """Ping one host; if alive, get MAC address."""
+        """
+        Pings one host at a time if IP is responds then tries to get MAC address
+        """
         try:
             result = subprocess.run(["ping", "-c", "1", "-W", "1", ip], capture_output=True, text=True)
             if result.returncode != 0:
@@ -75,7 +92,9 @@ class GatewayScanner:
             return None
     
     def ping_sweep(self) -> None:
-        """Perform ICMP ping sweep using a ThreadPoolExecutor."""
+        """
+        Perform ICMP ping sweep using a ThreadPoolExecutor for the entire networke range.
+        """
         if not self.gateway_ip:
             raise ValueError("Gateway IP not set. Call set_gateway() first.")
             
@@ -130,7 +149,6 @@ class GatewayScanner:
                     self.logger.info("Progress: %d/%d hosts checked (%.1f%%) - Found: %d", 
                                    checked, total_hosts, percent_complete, self.found_hosts)
         
-        # Final summary
         self.logger.info("Scan completed. Found %d active hosts out of %d total hosts.", 
                         self.found_hosts, total_hosts)
         
@@ -138,6 +156,9 @@ class GatewayScanner:
             self.logger.info("Scan was stopped before completion.")
 
     def _get_mac_address(self, ip: str) -> str:
+        """
+        Try to find MAC using 3 methods arp, arping and checking the /proc/net/arp
+        """
         mac = "Unknown"
     
         try:
@@ -178,10 +199,16 @@ class GatewayScanner:
         return mac
 
     def stop_scan(self) -> None:
+        """
+        All this does is stop the scan if initiated by the user
+        """
         self.scanning.clear()
         self.logger.info("Scan stopped by user")
 
     def display_results(self) -> None:
+        """
+        Displays the results of the network scan in a nice formatted table then prints it to stout, if there are no hosts on the network then return a error 
+        """
         if not self.hosts:
             self.logger.info("No hosts found on the network.")
             return
@@ -204,6 +231,9 @@ class GatewayScanner:
         print("=" * 50)
 
     def export_to_json(self, filename: Optional[str] = None) -> str:
+        """
+        This exports the output of the scan to a json log 
+        """
         if not filename:
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"network_hosts_{ts}.json"
@@ -220,6 +250,9 @@ class GatewayScanner:
         return filename
 
     def run(self):
+        """
+        This runs the the GatewayScanner asking the user to enter the gateway IP
+        """
         gateway_ip = input("Enter gateway IP: ").strip()
         
         if not gateway_ip:
@@ -247,6 +280,9 @@ class GatewayScanner:
             return
 
     def get_results(self) -> Dict[str, Any]:
+        """
+        Returns the results in a structured format 
+        """
         return {
             "success": len(self.hosts) > 0,
             "gateway_ip": self.gateway_ip,
@@ -256,4 +292,4 @@ class GatewayScanner:
         }
 
 
-scanner = GatewayScanner()
+gate_scan = GatewayScanner()

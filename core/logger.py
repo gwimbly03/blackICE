@@ -1,11 +1,11 @@
 import logging
 import os
 
-# Ensure logs folder exists
+### This file is not needed anymore as I do logging on each script  
+
 if not os.path.exists("logs"):
     os.makedirs("logs")
 
-# Configure the logging
 logging.basicConfig(
     filename="logs/pentest.log",
     level=logging.INFO,
@@ -13,16 +13,10 @@ logging.basicConfig(
 )
 
 def log_info(message):
-    """
-    Log an informational message to console and file
-    """
     print(f"[INFO] {message}")
     logging.info(message)
 
 def log_error(message):
-    """
-    Log an error message to console and file
-    """
     print(f"[ERROR] {message}")
     logging.error(message)
 

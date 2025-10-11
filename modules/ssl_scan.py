@@ -6,6 +6,10 @@ from typing import Dict, List, Any
 import json
 
 class SSLScanner:
+    """
+    SSL scanner that get the certificate, expiry, supported protocols, ciphers and common vulnerabilities 
+    """
+
     description = "SSL/TLS Scanner it finds SSL engryption, certs and expiry date, also runs some checks for common vulnerabilities"
     
     def __init__(self):
@@ -19,34 +23,11 @@ class SSLScanner:
         
         self.ssl_ports = [443, 8443, 9443, 10443, 11443]
 
-    def run(self):
-        target = input("Enter target domain or IP (e.g., example.com:443): ").strip()
-        
-        if not target:
-            print("No target specified. Exiting.")
-            return
-            
-        if ':' not in target:
-            target += ':443'
-            
-        host, port_str = target.split(':', 1)
-        port = int(port_str)
-        
-        print(f"\nStarting SSL/TLS scan for: {host}:{port}")
-        print("=" * 50)
-        
-        try:
-            self.scan_ssl(host, port)
-            self.display_results()
-            
-            export = input("\nExport results to JSON? (y/n): ").lower()
-            if export in ('y', 'yes'):
-                self.export_results()
-                
-        except Exception as e:
-            print(f"Error during SSL scan: {e}")
-
+    
     def scan_ssl(self, host: str, port: int):
+        """
+        Start the ssl scanner with its supported protocols and ports
+        """
         self.results = {
             'target': f"{host}:{port}",
             'scan_time': datetime.now().isoformat(),
@@ -68,6 +49,9 @@ class SSLScanner:
         self.calculate_security_grade()
 
     def get_certificate_info(self, host: str, port: int):
+        """
+        Find and parse cert info for a host
+        """
         try:
             context = ssl.create_default_context()
             context.check_hostname = False
@@ -108,12 +92,18 @@ class SSLScanner:
             self.results['certificate_info'] = {'error': str(e)}
 
     def get_days_until_expiry(self, x509_cert) -> int:
+        """
+        Calculates the remaining days before the cert expires
+        """
         not_after = x509_cert.get_notAfter().decode('ascii')
         expiry_date = datetime.strptime(not_after, '%Y%m%d%H%M%SZ')
         days_left = (expiry_date - datetime.utcnow()).days
         return days_left
 
     def get_certificate_extensions(self, x509_cert) -> Dict:
+        """
+        Extract extensions from ssl certs 
+        """
         extensions = {}
         for i in range(x509_cert.get_extension_count()):
             try:
@@ -124,6 +114,9 @@ class SSLScanner:
         return extensions
 
     def check_supported_protocols(self, host: str, port: int):
+        """
+        Check what tls version are supported 
+        """
         supported = {}
         
         for protocol, protocol_name in self.supported_protocols.items():
@@ -144,6 +137,9 @@ class SSLScanner:
         self.results['supported_protocols'] = supported
 
     def check_vulnerabilities(self, host: str, port: int):
+        """
+        Checks common ssl vulnerabilities
+        """
         vulnerabilities = {
             'heartbleed': self.check_heartbleed(host, port),
             'poodle': self.check_poodle(host, port),
@@ -156,6 +152,9 @@ class SSLScanner:
         self.results['vulnerability_checks'] = vulnerabilities
 
     def check_heartbleed(self, host: str, port: int) -> Dict:
+        """
+        This preforms a heartbleed check but this heartbleed test was made because I dont want to create a real heartbleed test and send exploit packets since it could be considered illegal
+        """
         try:
             context = ssl.create_default_context()
             context.check_hostname = False
@@ -163,7 +162,6 @@ class SSLScanner:
             
             with socket.create_connection((host, port), timeout=5) as sock:
                 with context.wrap_socket(sock, server_hostname=host) as ssock:
-                    # this heartbleed test was made because I dont want to create a real heartbleed test and send it, it could be considered illegal. 
                     cipher = ssock.cipher()
                     return {
                         'vulnerable': False,
@@ -173,6 +171,9 @@ class SSLScanner:
             return {'vulnerable': False, 'details': f'Test failed: {e}'}
 
     def check_poodle(self, host: str, port: int) -> Dict:
+        """
+        This checks ssl version 3 support, the poodle vulnerability exploits the negotiation feature called the downgrade dance where a client and server may fall back to SSL 3.0 if a secure connection attempt fails
+        """
         try:
             context = ssl.SSLContext(ssl.PROTOCOL_SSLv3)
             context.check_hostname = False
@@ -185,6 +186,9 @@ class SSLScanner:
             return {'vulnerable': False, 'details': 'SSLv3 not supported'}
 
     def check_freak(self, host: str, port: int) -> Dict:
+        """
+        This checks the FREAK vulnerability. Which allows a man-in-the-middle attacker to manipulate the initial cipher suite negotiation between a client and a server, forcing the use of these weak 512-bit export-grade RSA keys
+        """
         try:
             context = ssl.create_default_context()
             context.check_hostname = False
@@ -198,6 +202,9 @@ class SSLScanner:
             return {'vulnerable': False, 'details': 'Export ciphers not supported'}
 
     def check_beast(self, host: str, port: int) -> Dict:
+        """
+        Checks the beast vulnerability. It exploits the way TLS 1.0 generates initialization vectors for block ciphers in cipher block chaining mode, where each IV is the previous ciphertext block, making the encryption predictable under specific conditions.
+        """
         tls10_supported = self.results['supported_protocols'].get('TLSv1.0', False)
         return {
             'vulnerable': tls10_supported,
@@ -205,6 +212,9 @@ class SSLScanner:
         }
 
     def check_weak_ciphers(self, host: str, port: int) -> Dict:
+        """
+        Checks if the cert is using weak and older ciphers from the cipher list
+        """
         weak_ciphers = ['RC4', 'DES', '3DES', 'NULL', 'EXPORT', 'MD5']
         weak_found = []
         
@@ -221,6 +231,9 @@ class SSLScanner:
         }
 
     def check_certificate_mismatch(self, host: str, port: int) -> Dict:
+        """
+        Checks to see if the cert matches the hostname
+        """
         try:
             context = ssl.create_default_context()
             context.check_hostname = True
@@ -235,6 +248,9 @@ class SSLScanner:
             return {'vulnerable': False, 'details': 'Could not verify certificate'}
 
     def get_cipher_suites(self, host: str, port: int):
+        """
+        Get the cipher suit thats being used in the ssl session
+        """
         try:
             context = ssl.create_default_context()
             context.check_hostname = False
@@ -248,7 +264,9 @@ class SSLScanner:
             self.results['cipher_suites'] = [f"Error: {e}"]
 
     def calculate_security_grade(self):
-        """Calculate overall security grade"""
+        """
+        Calculate the security score based on the above checks
+        """
         score = 100
         
         vulns = self.results['vulnerability_checks']
@@ -292,6 +310,9 @@ class SSLScanner:
         self.results['security_score'] = score
 
     def display_results(self):
+        """
+        Outputs the results to stout
+        """
         print(f"\n{'='*60}")
         print(f"SSL/TLS SCAN RESULTS")
         print(f"{'='*60}")
@@ -331,6 +352,9 @@ class SSLScanner:
         print(f"\n{'='*60}")
 
     def export_results(self, filename: str = None):
+        """
+        Saves to json if needed
+        """
         if not filename:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             target_clean = self.results['target'].replace(':', '_')
@@ -343,4 +367,32 @@ class SSLScanner:
         except Exception as e:
             print(f"Error exporting results: {e}")
 
-ssl_scanner = SSLScanner()
+    def run(self):
+        target = input("Enter target domain or IP (e.g., example.com:443): ").strip()
+        
+        if not target:
+            print("No target specified. Exiting.")
+            return
+            
+        if ':' not in target:
+            target += ':443'
+            
+        host, port_str = target.split(':', 1)
+        port = int(port_str)
+        
+        print(f"\nStarting SSL/TLS scan for: {host}:{port}")
+        print("=" * 50)
+        
+        try:
+            self.scan_ssl(host, port)
+            self.display_results()
+            
+            export = input("\nExport results to JSON? (y/n): ").lower()
+            if export in ('y', 'yes'):
+                self.export_results()
+                
+        except Exception as e:
+            print(f"Error during SSL scan: {e}")
+
+
+ssl_scan = SSLScanner()

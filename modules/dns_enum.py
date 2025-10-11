@@ -22,22 +22,7 @@ class DNSEnumerator:
             'ssl', 'vps', 'web1', 'web2', 'ws1', 'ws2', 'office', 'owa', 'proxy', 'router'
         ]
 
-    def run(self):
-        domain = input("Enter domain to enumerate (e.g., example.com): ").strip()
-        
-        if not domain:
-            print("No domain specified. Exiting.")
-            return
-            
-        print(f"\nStarting DNS enumeration for: {domain}")
-        print("=" * 50)
-        
-        try:
-            self.enumerate_dns(domain)
-            self.display_results()
-        except Exception as e:
-            print(f"Error during DNS enumeration: {e}")
-
+    
     def enumerate_dns(self, domain: str):
         self.results = {
             'domain': domain,
@@ -196,5 +181,22 @@ class DNSEnumerator:
             print(f"\nResults exported to: {filename}")
         except Exception as e:
             print(f"Error exporting results: {e}")
+
+    def run(self):
+        domain = input("Enter domain to enumerate (e.g., example.com): ").strip()
+        
+        if not domain:
+            print("No domain specified. Exiting.")
+            return
+            
+        print(f"\nStarting DNS enumeration for: {domain}")
+        print("=" * 50)
+        
+        try:
+            self.enumerate_dns(domain)
+            self.display_results()
+        except Exception as e:
+            print(f"Error during DNS enumeration: {e}")
+
 
 dns_enum = DNSEnumerator()

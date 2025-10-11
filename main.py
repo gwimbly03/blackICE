@@ -1,9 +1,12 @@
-#metasploit was a big inspiration for the ui so it looks similar
 
 from core.engine import PentestEngine
 from core.logger import log_info
 
 def main():
+    """
+    This is the runner that connects the modules and engine together, it allows a user to pick a categories then run the modules they want.
+    metasploit was a big inspiration for the ui so it looks similar
+    """
     print("=" * 50)
     print("      BlackICE – Intrusion Countermeasures Electronics")
     print("                 Version 0.1 – Alpha")
@@ -52,14 +55,14 @@ def main():
                 break
 
             if category_choice not in available_categories:
-                print("❌ Invalid category choice.")
+                print("Invalid category choice.")
                 continue
 
             category = available_categories[category_choice]
             available_modules = [mod for mod in category["modules"] if mod in engine.modules]
             
             if not available_modules:
-                print("❌ No modules available in this category.")
+                print("No modules available in this category.")
                 continue
 
             while True:
@@ -85,7 +88,7 @@ def main():
                             module_name = available_modules[mod_index]
                             
                             print(f"\n{'='*50}")
-                            print(f"🚀 Running: {module_name}")
+                            print(f"Running: {module_name}")
                             print(f"{'='*50}")
                             
                             engine.run_module(module_name)
@@ -107,9 +110,9 @@ def main():
                                 break
                                 
                         else:
-                            print("❌ Invalid module number.")
+                            print("Invalid module number.")
                     else:
-                        print("❌ Please enter a number.")
+                        print("Please enter a number.")
                         
                 except Exception as e:
                     print(f"Error running module: {e}")

@@ -5,10 +5,20 @@ from core.logger import log_info, log_error
 MODULES_DIR = "modules"
 
 class PentestEngine:
+    """
+    This class allows me to load custom modules to use with my vulnerability scanner, if modules are put inside the ../modules/ folder then it can automatically grab the modules.
+    Each module must be in it own class and implement a run() method and a description to explain what the module does 
+    """
     def __init__(self):
+        """
+        Start the engine
+        """
         self.modules = {}
 
     def discover_modules(self):
+        """
+        Discover all the modules in the ../modules/ folder then tries to import them
+        """
         log_info("Discovering modules...")
         for file in os.listdir(MODULES_DIR):
             if file.endswith(".py") and file != "__init__.py":
@@ -36,6 +46,9 @@ class PentestEngine:
                     log_error(f"Failed to load {module_name}: {e}")
 
     def run_module(self, module_name):
+        """
+        Runs the specified module 
+        """
         if module_name in self.modules:
             try:
                 log_info(f"Running module: {module_name}")
