@@ -5,9 +5,15 @@ import subprocess
 from typing import Dict, List, Any
 
 class DNSEnumerator:
+    """
+    This class is for dns enumeration which finds dns records, subdomains, tries to do zone transfers and reverse dns lookups
+    """
     description = "DNS Enumeration finds the DNS records and subdomains"
     
     def __init__(self):
+        """
+        Initialize DNSEnumerator 
+        """
         self.results = {}
         self.common_subdomains = [
             'www', 'mail', 'ftp', 'localhost', 'webmail', 'smtp', 'pop', 'ns1', 'webdisk',
@@ -24,6 +30,9 @@ class DNSEnumerator:
 
     
     def enumerate_dns(self, domain: str):
+        """
+        Runs the entire dns enumeration on a certian url
+        """
         self.results = {
             'domain': domain,
             'basic_records': {},
@@ -44,7 +53,9 @@ class DNSEnumerator:
         self.reverse_dns_lookup()
 
     def get_basic_records(self, domain: str):
-        """Get common DNS record types"""
+        """
+        Gets common dns record types 
+        """
         record_types = ['A', 'AAAA', 'MX', 'NS', 'TXT', 'CNAME', 'SOA']
         
         for record_type in record_types:
@@ -56,6 +67,9 @@ class DNSEnumerator:
                 self.results['basic_records'][record_type] = [f"Error: {e}"]
 
     def enumerate_subdomains(self, domain: str):
+        """
+        Will brute force subdomains and tries to discover other subdomains using zone transfer
+        """
         found_subdomains = set()
         
         print("Brute-forcing common subdomains...")
@@ -81,7 +95,9 @@ class DNSEnumerator:
         self.results['subdomains'] = sorted(list(found_subdomains))
 
     def get_dns_servers(self, domain: str):
-        """Get authoritative DNS servers"""
+        """
+        Gets authoritative name servers for url
+        """
         try:
             if 'NS' in self.results['basic_records']:
                 self.results['dns_servers'] = self.results['basic_records']['NS']
@@ -89,6 +105,10 @@ class DNSEnumerator:
             self.results['dns_servers'] = [f"Error: {e}"]
 
     def attempt_zone_transfer(self, domain: str):
+         """
+        Tries to zone transfer AXFR on the discovered name servers
+        """
+
         zone_transfer_results = {}
         
         if 'NS' in self.results['basic_records']:
@@ -102,6 +122,9 @@ class DNSEnumerator:
         self.results['zone_transfer'] = zone_transfer_results
 
     def attempt_zone_transfer_single(self, ns_server: str, domain: str):
+        """
+        Only does a single zone transfer for name server
+        """
         try:
             resolver = dns.resolver.Resolver()
             resolver.nameservers = [socket.gethostbyname(ns_server)]
@@ -111,6 +134,9 @@ class DNSEnumerator:
             raise Exception("Zone transfer failed or not allowed")
 
     def reverse_dns_lookup(self):
+        """
+        Reverse DNS lookup on the the dns record (A) IP to get possible hostname
+        """
         reverse_results = []
         
         if 'A' in self.results['basic_records']:
@@ -126,6 +152,9 @@ class DNSEnumerator:
         self.results['reverse_dns'] = reverse_results
 
     def display_results(self):
+        """
+        Displays formatted results of DNSEnumerator to stout
+        """
         print(f"\n{'='*60}")
         print(f"DNS ENUMERATION RESULTS: {self.results['domain']}")
         print(f"{'='*60}")
@@ -157,7 +186,7 @@ class DNSEnumerator:
                 if len(result) > 5:
                     print(f"     ... and {len(result) - 5} more records")
             else:
-                print(f"  ✓ {ns}: {result}")
+                print(f"  {ns}: {result}")
         
         print(f"\nREVERSE DNS LOOKUPS:")
         print("-" * 40)
@@ -169,6 +198,9 @@ class DNSEnumerator:
         print(f"{'='*60}")
 
     def export_results(self, filename: str = None):
+        """
+        Export the result to a json log
+        """
         if not filename:
             from datetime import datetime
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
