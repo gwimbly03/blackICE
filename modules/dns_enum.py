@@ -215,7 +215,7 @@ class DNSEnumerator:
             print(f"Error exporting results: {e}")
 
     def run(self):
-        domain = input("Enter domain to enumerate (e.g., example.com): ").strip()
+        domain = input("Enter domain to enumerate (e.x., example.com): ").strip()
         
         if not domain:
             print("No domain specified. Exiting.")
