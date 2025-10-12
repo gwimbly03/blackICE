@@ -105,7 +105,7 @@ class DNSEnumerator:
             self.results['dns_servers'] = [f"Error: {e}"]
 
     def attempt_zone_transfer(self, domain: str):
-         """
+        """
         Tries to zone transfer AXFR on the discovered name servers
         """
 
