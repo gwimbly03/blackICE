@@ -13,10 +13,6 @@
   * [2. Choose a category](#2-choose-a-category)
   * [3. Choose a module](#3-choose-a-module)
   * [4. Provide input](#4-provide-input)
-  * [Example run](#example-run)
-* [Notes](#notes)
-* [License](#license)
-
 ---
 
 ## Prerequisites
