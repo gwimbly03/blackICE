@@ -1,16 +1,27 @@
-
+import signal
+import sys
 from core.engine import PentestEngine
-from core.logger import log_info
+from core.logger import logger
+
+def signal_handler(sig, frame):
+    """Handle Ctrl+C gracefully"""
+    print("\nInterrupt received. Shutting down gracefully...")
+    logger.finalize()
+    sys.exit(0)
 
 def main():
     """
     This is the runner that connects the modules and engine together, it allows a user to pick a categories then run the modules they want.
     metasploit was a big inspiration for the ui so it looks similar
     """
+    signal.signal(signal.SIGINT, signal_handler)
+    
     print("=" * 50)
-    print("      BlackICE – Intrusion Countermeasures Electronics")
-    print("                 Version 0.1 – Alpha")
+    print("      BlackICE - Intrusion Countermeasures Electronics")
+    print("                 Version 0.1 - Alpha")
     print("=" * 50)
+
+    logger.initialize()
 
     engine = PentestEngine()
     engine.discover_modules()
@@ -23,15 +34,15 @@ def main():
         "2": {"name": "Vulnerability Assessment", "modules": [
             "vuln_scan", "ssl_scan", "web_vuln_scan"
         ]},
-        #i am not gonna implement these modules for the mvp i will do that in other milestones since I still dont know what attack modules would be best to implement
-        #"3": {"name": "Wireless", "modules": [
-        #]},
-        #"4": {"name": "Exploitation", "modules": [
-        #]},
-        #"5": {"name": "Post-Exploitation", "modules": [
-        #]},
-        #"6": {"name": "Reporting", "modules": [
-        #]}
+        "3": {"name": "Wireless", "modules": [
+        ]},
+        "4": {"name": "Exploitation", "modules": [
+        ]},
+        "5": {"name": "Post-Exploitation", "modules": [
+        ]},
+        "6": {"name": "Reporting", "modules": [
+            "compliance_check"
+        ]}
     }
 
     while True:
@@ -52,6 +63,7 @@ def main():
 
             if category_choice == "0":
                 print("\nExiting BlackICE.")
+                logger.finalize()
                 break
 
             if category_choice not in available_categories:
@@ -101,10 +113,11 @@ def main():
                                 elif next_action == "2":
                                     break  
                                 elif next_action == "3":
-                                    print("\nExiting blackICE.")
+                                    print("\nExiting BlackICE.")
+                                    logger.finalize()
                                     return
                                 else:
-                                    print("❌ Invalid choice. Please enter 1, 2, or 3.")
+                                    print("Invalid choice. Please enter 1, 2, or 3.")
                             
                             if next_action == "2":
                                 break
@@ -121,12 +134,11 @@ def main():
                         break
 
         except KeyboardInterrupt:
-            print("\n\nInterrupt received. Returning to main menu...")
+            print("\nInterrupt received. Returning to main menu...")
             continue
         except Exception as e:
             print(f"Unexpected error: {e}")
             continue
 
 if __name__ == "__main__":
-    log_info("BlackICE started")
     main()

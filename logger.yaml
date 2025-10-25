@@ -1,0 +1,49 @@
+# blackice/logger.yaml
+logging:
+  # Format: "json", "csv", or "none" to disable logging
+  format: "json"
+  
+  # Output directory for log files
+  output_dir: "logs"
+  
+  # Console output settings
+  console:
+    # Whether to show progress messages in console
+    show_progress: true
+    
+    # Whether to show "Logged results from X" messages
+    show_log_messages: false
+    
+    # Whether to show module start messages
+    show_module_start: true
+    
+    # Whether to show module completion messages
+    show_module_completion: true
+    
+  # File output settings
+  file:
+    # Include timestamp in filename
+    include_timestamp: true
+    
+    # File naming pattern
+    filename_pattern: "blackice_scan_{timestamp}"
+    
+    # Maximum log file size in MB (0 for no limit)
+    max_file_size: 10
+    
+    # Keep backup logs (rotate logs)
+    backup_count: 5
+    
+  # Data to include in logs
+  include:
+    # Include full module results
+    module_results: true
+    
+    # Include error details
+    error_details: true
+    
+    # Include scan metadata
+    scan_metadata: true
+    
+    # Include timing information
+    timing_info: true

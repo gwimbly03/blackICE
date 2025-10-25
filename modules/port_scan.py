@@ -1,7 +1,7 @@
 import socket
 from datetime import datetime
 from threading import Thread, Lock
-from core.logger import log_info, log_error
+from core.logger import logger
 
 class PortScanner:
     """
@@ -184,13 +184,13 @@ class PortScanner:
                 banner = self.grab_banner(target, port, service)
                 with self.lock:
                     self.open_ports.append((port, service, banner))
-                log_info(f"Port {port}/{service} is open - Banner: {banner}")
+                print(f"Port {port}/{service} is open - Banner: {banner}")
             else:
-                log_info(f"Port {port}/{service} is closed")
+                print(f"Port {port}/{service} is closed")
                 
             sock.close()
         except Exception as e:
-            log_error(f"Error scanning port {port}: {e}")
+            print(f"Error scanning port {port}: {e}")
 
     def run(self):
         """
@@ -202,6 +202,7 @@ class PortScanner:
             print("No target IP specified. Exiting.")
             return
 
+        logger.log_module_start("port_scan", target)
         
         self.open_ports = []  
         
@@ -216,7 +217,7 @@ class PortScanner:
                 ports = list(range(start, end + 1))
                 print(f"Scanning ports {start}-{end} ({len(ports)} ports)")
             except Exception:
-                log_error("Invalid input. Scanning common ports instead.")
+                print("Invalid input. Scanning common ports instead.")
                 ports = list(self.common_ports.keys())
         else:
             ports = list(self.common_ports.keys())
@@ -254,8 +255,26 @@ class PortScanner:
 
         end_time = datetime.now()
         duration = end_time - start_time
+        
+        result = {
+            "status": "completed",
+            "scan_duration": str(duration),
+            "ports_scanned": len(ports),
+            "open_ports_count": len(self.open_ports),
+            "closed_ports_count": closed_count,
+            "open_ports": [
+                {
+                    "port": port,
+                    "service": service,
+                    "banner": banner
+                } for port, service, banner in self.open_ports
+            ],
+            "port_range_used": port_input if port_input else "common_ports"
+        }
+        
+        logger.log_module_result("port_scan", target, result)
+        
         print(f"\nScan finished at {end_time} (Duration: {duration})")
-        log_info(f"Scan finished on {target}")
-        log_info(f"Open ports: {self.open_ports}")
+        print(f"Scan results logged for {target}")
 
 scanner = PortScanner()

@@ -2,15 +2,13 @@ from __future__ import annotations
 import ipaddress
 import json
 import logging
-#import os
 import re
-#import socket
 import subprocess
-#import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Optional, Dict, Any, List
+from core.logger import logger
 
 class GatewayScanner:
     """
@@ -20,28 +18,14 @@ class GatewayScanner:
     
     def __init__(self):
         """
-        Start the GatewayScanner and configure the logger
+        Start the GatewayScanner
         """
-        self.logger = self._setup_logger()
         self.gateway_ip = None
         self.network_range = None
         self.hosts = []
         self.scanning = threading.Event()
         self.found_hosts = 0
         self.max_workers = 50
-
-    def _setup_logger(self):
-        """
-        Creates the logger for the scanner 
-        """
-        logger = logging.getLogger("gateway_scanner")
-        if not logger.handlers:
-            h = logging.StreamHandler()
-            fmt = logging.Formatter("%(asctime)s %(levelname)-7s %(message)s")
-            h.setFormatter(fmt)
-            logger.addHandler(h)
-        logger.setLevel(logging.INFO)
-        return logger
 
     def set_gateway(self, gateway_ip: str) -> None:
         """
@@ -74,7 +58,7 @@ class GatewayScanner:
         else:
             self.network_range = f"{gateway_octets[0]}.{gateway_octets[1]}.{gateway_octets[2]}.0/24"
         
-        self.logger.info("Using network range: %s", self.network_range)
+        print(f"Using network range: {self.network_range}")
         return self.network_range
 
     def _ping_host(self, ip: str) -> Optional[Dict[str, str]]:
@@ -104,21 +88,21 @@ class GatewayScanner:
         network = ipaddress.ip_network(self.network_range, strict=False)
         gateway_ip_obj = ipaddress.ip_address(self.gateway_ip)
         if gateway_ip_obj not in network:
-            self.logger.warning("Gateway IP %s is not in detected network %s!", self.gateway_ip, self.network_range)
+            print(f"Warning: Gateway IP {self.gateway_ip} is not in detected network {self.network_range}!")
 
         hosts = list(network.hosts())
         total_hosts = len(hosts)
         
         if total_hosts > 1000:
-            self.logger.warning("Large network detected (%d hosts). This may take a while...", total_hosts)
+            print(f"Large network detected ({total_hosts} hosts). This may take a while...")
             if total_hosts > 10000:
                 response = input(f"Scan {total_hosts} hosts? This could take a long time. Continue? (y/N): ")
                 if response.lower() not in ('y', 'yes'):
-                    self.logger.info("Scan cancelled by user")
+                    print("Scan cancelled by user")
                     return
 
-        self.logger.info("Scanning network: %s (%d hosts)", self.network_range, total_hosts)
-        self.logger.info("Scanning for IP and MAC address...")
+        print(f"Scanning network: {self.network_range} ({total_hosts} hosts)")
+        print("Scanning for IP and MAC address...")
 
         self.scanning.set()
         self.found_hosts = 0 
@@ -132,7 +116,7 @@ class GatewayScanner:
                 checked += 1
                 
                 if not self.scanning.is_set():
-                    self.logger.info("Scan stopped by user after %d hosts", checked)
+                    print(f"Scan stopped by user after {checked} hosts")
                     break
                     
                 try:
@@ -140,20 +124,18 @@ class GatewayScanner:
                     if result:
                         self.hosts.append(result)
                         self.found_hosts += 1
-                        self.logger.info("Found: %s - %s", result["ip"], result["mac"])
+                        print(f"Found: {result['ip']} - {result['mac']}")
                 except Exception as e:
-                    self.logger.debug("Error scanning host: %s", e)
+                    pass  # Silent error handling
                 
                 if checked % 50 == 0 or checked == total_hosts:
                     percent_complete = (checked / total_hosts) * 100
-                    self.logger.info("Progress: %d/%d hosts checked (%.1f%%) - Found: %d", 
-                                   checked, total_hosts, percent_complete, self.found_hosts)
+                    print(f"Progress: {checked}/{total_hosts} hosts checked ({percent_complete:.1f}%) - Found: {self.found_hosts}")
         
-        self.logger.info("Scan completed. Found %d active hosts out of %d total hosts.", 
-                        self.found_hosts, total_hosts)
+        print(f"Scan completed. Found {self.found_hosts} active hosts out of {total_hosts} total hosts.")
         
         if not self.scanning.is_set():
-            self.logger.info("Scan was stopped before completion.")
+            print("Scan was stopped before completion.")
 
     def _get_mac_address(self, ip: str) -> str:
         """
@@ -203,14 +185,14 @@ class GatewayScanner:
         All this does is stop the scan if initiated by the user
         """
         self.scanning.clear()
-        self.logger.info("Scan stopped by user")
+        print("Scan stopped by user")
 
     def display_results(self) -> None:
         """
         Displays the results of the network scan in a nice formatted table then prints it to stout, if there are no hosts on the network then return a error 
         """
         if not self.hosts:
-            self.logger.info("No hosts found on the network.")
+            print("No hosts found on the network.")
             return
 
         self.hosts.sort(key=lambda x: [int(p) for p in x["ip"].split(".")])
@@ -230,25 +212,6 @@ class GatewayScanner:
         print(f"Total hosts found: {len(self.hosts)}")
         print("=" * 50)
 
-    def export_to_json(self, filename: Optional[str] = None) -> str:
-        """
-        This exports the output of the scan to a json log 
-        """
-        if not filename:
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"network_hosts_{ts}.json"
-        data = {
-            "scan_time": datetime.now().isoformat(),
-            "gateway_ip": self.gateway_ip,
-            "network_range": self.network_range,
-            "hosts_found": self.found_hosts,
-            "hosts": self.hosts,
-        }
-        with open(filename, "w") as f:
-            json.dump(data, f, indent=2)
-        self.logger.info("Results exported to: %s", filename)
-        return filename
-
     def run(self):
         """
         This runs the the GatewayScanner asking the user to enter the gateway IP
@@ -259,24 +222,47 @@ class GatewayScanner:
             print("No gateway IP specified. Exiting.")
             return
         
+        # Log module start
+        logger.log_module_start("gateway_scan", gateway_ip)
+        
         try:
             self.set_gateway(gateway_ip)
             
             start = datetime.now()
-            self.logger.info("Starting host discovery...")
+            print("Starting host discovery...")
             self.ping_sweep()
             duration = datetime.now() - start
-            self.logger.info("Scan completed in %s", duration)
+            print(f"Scan completed in {duration}")
 
             self.display_results()
 
-            if self.hosts:
-                export = input("\nExport results to JSON file? (y/n): ").lower()
-                if export in ('y', 'yes'):
-                    self.export_to_json()
-
+            # Prepare results for logging
+            result = {
+                "status": "completed",
+                "scan_duration": str(duration),
+                "network_range": self.network_range,
+                "hosts_found": len(self.hosts),
+                "total_hosts_scanned": len(list(ipaddress.ip_network(self.network_range, strict=False).hosts())),
+                "hosts": self.hosts,
+                "summary": {
+                    "total_hosts_found": len(self.hosts),
+                    "gateway_ip": self.gateway_ip,
+                    "network_range": self.network_range
+                }
+            }
+            
+            # Log the results
+            logger.log_module_result("gateway_scan", gateway_ip, result)
+            
+            print(f"\nNetwork scan completed. Results have been logged.")
+            
         except Exception as e:
-            self.logger.error("Error running gateway scanner: %s", e)
+            error_result = {
+                "status": "error",
+                "error": str(e)
+            }
+            logger.log_module_result("gateway_scan", gateway_ip, error_result)
+            print(f"Error running gateway scanner: {e}")
             return
 
     def get_results(self) -> Dict[str, Any]:
