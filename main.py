@@ -41,7 +41,7 @@ def main():
         "5": {"name": "Post-Exploitation", "modules": [
         ]},
         "6": {"name": "Reporting", "modules": [
-            "compliance_check"
+            "compliance_check", "linux_baseline_scanner"
         ]}
     }
 
