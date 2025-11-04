@@ -1,9 +1,12 @@
 import json
 import csv
 import yaml
+import smtplib
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 class Logging:
     def __init__(self):
@@ -45,6 +48,20 @@ class Logging:
                 'error_details': True,
                 'scan_metadata': True,
                 'timing_info': True
+            },
+            'email': {
+                'enabled': False,
+                'smtp_server': 'sandbox.smtp.mailtrap.io',  # Changed to Mailtrap default
+                'smtp_port': 2525,  # Changed to Mailtrap port
+                'sender_email': '',
+                'sender_username': '',  # ADDED: Mailtrap username field
+                'sender_password': '',
+                'recipient_emails': [],
+                'notifications': {
+                    'baseline_changes': True,
+                    'critical_findings': True,
+                    'scan_completion': True  # Changed to true
+                }
             }
         }
         
@@ -215,5 +232,139 @@ class Logging:
             
         return self.output_dir / filename
 
-# Global logger instance
+    # Email notification methods
+    def send_email_notification(self, subject: str, message: str, is_critical: bool = False):
+        """Send email notification based on configuration"""
+        email_config = self.config.get('email', {})
+        
+        # Check if email is enabled
+        #if not email_config.get('enabled', False):
+        #    print("DEBUG: Email notifications are disabled in configuration")
+        #    return False
+            
+        # Check notification preferences
+        #if is_critical and not email_config.get('notifications', {}).get('critical_findings', True):
+        #    print("DEBUG: Critical notifications are disabled")
+        #    return False
+            
+        try:
+            # Email configuration
+            smtp_server = email_config.get('smtp_server', 'sandbox.smtp.mailtrap.io')
+            smtp_port = email_config.get('smtp_port', 2525)
+            sender_email = email_config.get('sender_email')
+            sender_username = email_config.get('sender_username')  # Get Mailtrap username
+            sender_password = email_config.get('sender_password')
+            recipient_emails = email_config.get('recipient_emails', [])
+            
+            print(f"DEBUG: Attempting to send email via {smtp_server}:{smtp_port}")
+            print(f"DEBUG: Username: {sender_username}, Sender: {sender_email}")
+            
+            if not sender_email or not sender_password or not recipient_emails:
+                print("Email configuration incomplete. Check logger.yaml")
+                return False
+            
+            # Use username for login, fallback to sender_email if username not provided
+            login_username = sender_username if sender_username else sender_email
+            
+            # Create message
+            msg = MIMEMultipart()
+            msg['From'] = sender_email
+            msg['To'] = ', '.join(recipient_emails)
+            msg['Subject'] = f"BlackICE Alert: {subject}"
+
+            # Add message body
+            body = f"""
+BlackICE Security Scanner Notification
+
+{message}
+
+---
+Scan Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+System: {self._get_system_info()}
+            """
+            msg.attach(MIMEText(body, 'plain'))
+            
+            # Send email
+       #     print(f"DEBUG: Connecting to SMTP server...")
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+        #        print(f"DEBUG: Starting TLS...")
+                server.starttls()
+         #       print(f"DEBUG: Logging in with username: {login_username}")
+                server.login(login_username, sender_password)
+          #      print(f"DEBUG: Sending message...")
+                server.send_message(msg)
+            
+            print(f"Email notification sent: {subject}")
+            return True
+            
+        except Exception as e:
+            print(f"Failed to send email notification: {e}")
+            return False
+
+    def _get_system_info(self):
+        """Get basic system information for email notifications"""
+        import platform
+        return f"{platform.node()} ({platform.system()} {platform.release()})"
+
+    def notify_baseline_changes(self, changes_count: int, scan_file: str, changes_summary: str = ""):
+        """Send notification about baseline changes"""
+        #print(f"DEBUG: notify_baseline_changes called - {changes_count} changes")
+        email_config = self.config.get('email', {})
+        if not email_config.get('notifications', {}).get('baseline_changes', True):
+         #   print("DEBUG: Baseline change notifications disabled")
+            return
+            
+        if changes_count > 0:
+            subject = f"Baseline Changes Detected ({changes_count} changes)"
+            message = f"""
+ALERT: System baseline changes detected!
+
+Scan File: {scan_file}
+Changes Found: {changes_count}
+
+Summary of Changes:
+{changes_summary}
+
+Review the comparison file for detailed information.
+            """
+            self.send_email_notification(subject, message, is_critical=True)
+        else:
+            subject = "Baseline Scan Completed - No Changes"
+            message = f"""
+Baseline scan completed successfully.
+
+Scan File: {scan_file}
+Status: No significant changes detected
+
+System appears to be in expected state.
+            """
+            self.send_email_notification(subject, message, is_critical=False)
+
+    def notify_baseline_scan_complete(self, scan_result: Dict[str, Any]):
+        """Send notification when baseline scan completes"""
+        #print(f"DEBUG: notify_baseline_scan_complete called")
+        email_config = self.config.get('email', {})
+        if not email_config.get('notifications', {}).get('scan_completion', True):
+         #   print("DEBUG: Scan completion notifications disabled")
+            return
+            
+        subject = "Baseline Scan Completed"
+        summary = scan_result.get('data', {}).get('summary', {})
+        
+        message = f"""
+Baseline scan completed successfully.
+
+Scan ID: {scan_result.get('scan_id', 'Unknown')}
+Output File: {scan_result.get('output_file', 'Unknown')}
+
+Scan Summary:
+- Total Checks: {summary.get('total_checks', 0)}
+- Passed: {summary.get('passed', 0)}
+- Warnings: {summary.get('warnings', 0)}
+- Critical: {summary.get('critical', 0)}
+
+System: {self._get_system_info()}
+        """
+        self.send_email_notification(subject, message, is_critical=False)
+
 logger = Logging()

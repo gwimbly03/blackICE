@@ -1,0 +1,262 @@
+{
+  "metadata": {
+    "scan_id": "linux_baseline_20251104_132011",
+    "timestamp": "2025-11-04T13:20:11.700168",
+    "scanner_version": "2.0",
+    "scan_depth": "deep",
+    "distribution": {
+      "ANSI_COLOR": "0;38;2;126;186;228",
+      "BUG_REPORT_URL": "https://github.com/NixOS/nixpkgs/issues",
+      "BUILD_ID": "25.11.20251031.2fb006b",
+      "CPE_NAME": "cpe:/o:nixos:nixos:25.11",
+      "DEFAULT_HOSTNAME": "nixos",
+      "DOCUMENTATION_URL": "https://nixos.org/learn.html",
+      "HOME_URL": "https://nixos.org/",
+      "ID": "nixos",
+      "ID_LIKE": "",
+      "IMAGE_ID": "",
+      "IMAGE_VERSION": "",
+      "LOGO": "nix-snowflake",
+      "NAME": "NixOS",
+      "PRETTY_NAME": "NixOS 25.11 (Xantusia)",
+      "SUPPORT_URL": "https://nixos.org/community.html",
+      "VARIANT": "",
+      "VARIANT_ID": "",
+      "VENDOR_NAME": "NixOS",
+      "VENDOR_URL": "https://nixos.org/",
+      "VERSION": "25.11 (Xantusia)",
+      "VERSION_CODENAME": "xantusia",
+      "VERSION_ID": "25.11"
+    }
+  },
+  "findings": [
+    {
+      "module": "system_info",
+      "check": "system_identification",
+      "status": "PASS",
+      "data": {
+        "hostname": "Cyclonus",
+        "kernel": "6.17.6-zen1",
+        "architecture": "x86_64",
+        "boot_time": "2025-11-03T09:59:44",
+        "uptime": "20395 days, 17:59:44",
+        "load_average": [
+          0.79931640625,
+          0.88134765625,
+          0.89453125
+        ]
+      },
+      "message": "System information collected"
+    },
+    {
+      "module": "users_groups",
+      "check": "user_enumeration",
+      "status": "PASS",
+      "data": {
+        "users": [
+          {
+            "username": "root",
+            "uid": 0,
+            "gid": 0,
+            "shell": "/run/current-system/sw/bin/bash"
+          },
+          {
+            "username": "messagebus",
+            "uid": 4,
+            "gid": 4,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "polkituser",
+            "uid": 28,
+            "gid": 994,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "cups",
+            "uid": 36,
+            "gid": 20,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "systemd-coredump",
+            "uid": 151,
+            "gid": 991,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "systemd-network",
+            "uid": 152,
+            "gid": 152,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "systemd-resolve",
+            "uid": 153,
+            "gid": 153,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "systemd-timesync",
+            "uid": 154,
+            "gid": 154,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "nm-openvpn",
+            "uid": 217,
+            "gid": 217,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "systemd-oom",
+            "uid": 992,
+            "gid": 990,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "nscd",
+            "uid": 994,
+            "gid": 995,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "nm-iodine",
+            "uid": 995,
+            "gid": 57,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "gwimbly",
+            "uid": 1001,
+            "gid": 100,
+            "shell": "/run/current-system/sw/bin/fish"
+          },
+          {
+            "username": "nixbld1",
+            "uid": 30001,
+            "gid": 30000,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "nixbld2",
+            "uid": 30002,
+            "gid": 30000,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "nixbld3",
+            "uid": 30003,
+            "gid": 30000,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "nixbld4",
+            "uid": 30004,
+            "gid": 30000,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "nixbld5",
+            "uid": 30005,
+            "gid": 30000,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "nixbld6",
+            "uid": 30006,
+            "gid": 30000,
+            "shell": "/run/current-system/sw/bin/nologin"
+          },
+          {
+            "username": "nixbld7",
+            "uid": 30007,
+            "gid": 30000,
+            "shell": "/run/current-system/sw/bin/nologin"
+          }
+        ]
+      },
+      "message": "Enumerated 20 users"
+    },
+    {
+      "module": "network",
+      "check": "network_config",
+      "status": "PASS",
+      "data": {
+        "interface_count": 3
+      },
+      "message": "Network interfaces scanned"
+    },
+    {
+      "module": "processes",
+      "check": "process_enumeration",
+      "status": "PASS",
+      "data": {
+        "process_count": 269
+      },
+      "message": "Found 269 running processes"
+    },
+    {
+      "module": "file_integrity",
+      "check": "critical_files",
+      "status": "PASS",
+      "data": {
+        "files_scanned": 6
+      },
+      "message": "Integrity check for 6 critical files"
+    },
+    {
+      "module": "packages",
+      "check": "package_enumeration",
+      "status": "PASS",
+      "data": {
+        "package_count": 0
+      },
+      "message": "Packages enumerated"
+    },
+    {
+      "module": "cron",
+      "check": "cron_jobs",
+      "status": "PASS",
+      "data": {
+        "cron_entries": 0
+      },
+      "message": "Cron jobs scanned"
+    },
+    {
+      "module": "security",
+      "check": "security_tools",
+      "status": "PASS",
+      "data": {
+        "apparmor": "NOT_FOUND",
+        "selinux": "NOT_FOUND",
+        "ufw": "NOT_FOUND"
+      },
+      "message": "Security tools status checked"
+    },
+    {
+      "module": "kernel",
+      "check": "kernel_params",
+      "status": "PASS",
+      "message": "Kernel parameters scanned"
+    },
+    {
+      "module": "logging",
+      "check": "logging_config",
+      "status": "PASS",
+      "message": "Logging configuration scanned"
+    },
+    {
+      "module": "file_integrity",
+      "check": "suid_sgid_files",
+      "status": "PASS",
+      "message": "SUID/SGID files scanned"
+    }
+  ],
+  "summary": {
+    "total_checks": 11,
+    "passed": 11,
+    "warnings": 0,
+    "critical": 0
+  }
+}

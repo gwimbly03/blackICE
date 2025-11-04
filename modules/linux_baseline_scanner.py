@@ -8,6 +8,12 @@ import subprocess
 import grp
 import pwd
 from pathlib import Path
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.text import Text
+from rich import print as rprint
 
 class LinuxBaselineScanner:
     
@@ -17,54 +23,135 @@ class LinuxBaselineScanner:
         self.module_name = "linux_baseline_scanner"
         self.output_dir = "./baseline"
         os.makedirs(self.output_dir, exist_ok=True)
+        self.console = Console()  # Rich console
         
         if platform.system() != "Linux":
-            print("This module is designed for Linux systems only!")
+            self.console.print(
+                Panel(
+                    "This module is designed for Linux systems only!",
+                    style="red bold",
+                    title="[red]System Compatibility Error[/red]"
+                )
+            )
             return
     
     def run(self):
         try:
-            print("Starting Linux System Baseline Scan...")
+            self.console.print(
+                Panel.fit(
+                    "[bold blue]Starting Linux System Baseline Scan...[/bold blue]",
+                    style="blue",
+                    title="[bold white]BlackICE Baseline Scanner[/bold white]"
+                )
+            )
             
             scan_config = self._get_scan_config()
             
             scan_result = self._perform_baseline_scan(scan_config)
             
             if scan_result["success"]:
-                print(f"Baseline scan completed: {scan_result['output_file']}")
-                print(f"Scan Summary:")
-                print(f"   - Total checks: {scan_result['data']['summary']['total_checks']}")
-                print(f"   - Passed: {scan_result['data']['summary']['passed']}")
-                print(f"   - Warnings: {scan_result['data']['summary']['warnings']}")
-                print(f"   - Critical: {scan_result['data']['summary']['critical']}")
+                # Show success notification
+                self.console.print(
+                    Panel.fit(
+                        f"[bold green]Baseline scan completed successfully![/bold green]\n"
+                        f"[cyan]Output:[/cyan] {scan_result['output_file']}",
+                        style="green",
+                        title="[bold green]Scan Complete[/bold green]"
+                    )
+                )
+                
+                # Show scan summary table
+                self._show_scan_summary(scan_result['data']['summary'])
+                
+                # Send scan completion notification
+                self._notify_scan_completion(scan_result)
                 
                 self._offer_comparison(scan_result['output_file'])
             else:
-                print(f"Scan failed: {scan_result['error']}")
+                self.console.print(
+                    Panel.fit(
+                        f"[bold red]Scan failed: {scan_result['error']}[/bold red]",
+                        style="red",
+                        title="[bold red]Scan Failed[/bold red]"
+                    )
+                )
                 
         except Exception as e:
-            print(f"Module execution failed: {e}")
+            self.console.print(
+                Panel.fit(
+                    f"[bold red]Module execution failed: {e}[/bold red]",
+                    style="red",
+                    title="[bold red]Error[/bold red]"
+                )
+            )
+    
+    def _show_scan_summary(self, summary):
+        """Display scan summary as a rich table"""
+        table = Table(show_header=True, header_style="bold magenta", show_lines=True)
+        table.add_column("Metric", style="cyan", width=20)
+        table.add_column("Count", style="white", justify="center", width=10)
+        table.add_column("Status", justify="center", width=15)
+        
+        total = summary['total_checks']
+        
+        # Add rows with appropriate status indicators
+        table.add_row("Total Checks", str(total), "COMPLETE")
+        
+        # Passed row
+        passed_status = "[green]PASS[/green]" if summary['passed'] == total else f"[green]{summary['passed']}/{total}[/green]"
+        table.add_row("Passed", str(summary['passed']), passed_status)
+        
+        # Warnings row
+        warnings_status = "[yellow]WARNINGS[/yellow]" if summary['warnings'] > 0 else "[green]NONE[/green]"
+        table.add_row("Warnings", str(summary['warnings']), warnings_status)
+        
+        # Critical row
+        critical_status = "[red]CRITICAL[/red]" if summary['critical'] > 0 else "[green]NONE[/green]"
+        table.add_row("Critical", str(summary['critical']), critical_status)
+        
+        self.console.print("\n")
+        self.console.print(
+            Panel(
+                table,
+                title="[bold blue]Scan Summary[/bold blue]",
+                style="blue"
+            )
+        )
     
     def _get_scan_config(self):
-        print("\nScan Configuration:")
-        print("1. Standard scan (recommended)")
-        print("2. Deep scan (more comprehensive, takes longer)")
+        self.console.print(
+            Panel.fit(
+                "Configure your baseline scan parameters",
+                style="yellow",
+                title="[bold yellow]Scan Configuration[/bold yellow]"
+            )
+        )
         
-        choice = input("Select scan depth [1]: ").strip()
+        # Use rich for interactive input
+        self.console.print("\n[bold]Scan Depth Options:[/bold]")
+        self.console.print("  [cyan]1.[/cyan] Standard scan (recommended)")
+        self.console.print("  [yellow]2.[/yellow] Deep scan (more comprehensive, takes longer)")
+        
+        choice = self.console.input("\n[bold cyan]Select scan depth[/bold cyan] [[1]]: ").strip()
         scan_depth = "deep" if choice == "2" else "standard"
         
+        # Show scan depth selection
+        depth_color = "yellow" if scan_depth == "deep" else "cyan"
+        self.console.print(f"\nSelected: [{depth_color}]{scan_depth.title()} Scan[/{depth_color}]")
+        
         custom_paths = []
-        add_custom = input("Add custom critical file paths? (y/N): ").strip().lower()
+        add_custom = self.console.input("\n[bold]Add custom critical file paths?[/bold] (y/N): ").strip().lower()
         if add_custom == 'y':
-            print("Enter custom file paths (one per line, empty line to finish):")
+            self.console.print("\n[dim]Enter custom file paths (one per line, empty line to finish):[/dim]")
             while True:
-                path = input("> ").strip()
+                path = self.console.input("[bold blue]>[/bold blue] ").strip()
                 if not path:
                     break
                 if os.path.exists(path):
                     custom_paths.append(path)
+                    self.console.print(f"  [green]ADDED[/green] [cyan]{path}[/cyan]")
                 else:
-                    print(f"Path does not exist: {path}")
+                    self.console.print(f"  [red]ERROR[/red] Path does not exist: [red]{path}[/red]")
         
         return {
             "scan_depth": scan_depth,
@@ -111,14 +198,22 @@ class LinuxBaselineScanner:
             
             scan_modules = deep_modules if config["scan_depth"] == "deep" else standard_modules
             
-            print("Scanning system...")
-            for i, module in enumerate(scan_modules, 1):
-                module_name = module.__name__.replace('_scan_', '').replace('_', ' ')
-                print(f"   [{i}/{len(scan_modules)}] Scanning {module_name}...")
+            # Show scanning progress with rich
+            self.console.print("\n")
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                transient=True,
+            ) as progress:
+                task = progress.add_task("[cyan]Scanning system components...", total=len(scan_modules))
                 
-                result = module(config)
-                if result:
-                    baseline_data["findings"].extend(result)
+                for i, module in enumerate(scan_modules, 1):
+                    module_name = module.__name__.replace('_scan_', '').replace('_', ' ')
+                    progress.update(task, advance=1, description=f"[cyan]Scanning {module_name}...")
+                    
+                    result = module(config)
+                    if result:
+                        baseline_data["findings"].extend(result)
             
             baseline_data["summary"]["total_checks"] = len(baseline_data["findings"])
             baseline_data["summary"]["passed"] = len([f for f in baseline_data["findings"] if f.get("status") == "PASS"])
@@ -135,6 +230,13 @@ class LinuxBaselineScanner:
             }
             
         except Exception as e:
+            self.console.print(
+                Panel.fit(
+                    f"[bold red]Scan failed: {str(e)}[/bold red]",
+                    style="red",
+                    title="[bold red]Scan Error[/bold red]"
+                )
+            )
             return {
                 "success": False,
                 "error": str(e),
@@ -147,20 +249,27 @@ class LinuxBaselineScanner:
                         if f.endswith('.json') and f != os.path.basename(current_baseline)]
             
             if baselines:
-                print(f"\nFound {len(baselines)} previous baselines")
+                self.console.print(
+                    Panel.fit(
+                        f"Found [cyan]{len(baselines)}[/cyan] previous baselines",
+                        style="blue",
+                        title="[bold blue]Baseline Comparison[/bold blue]"
+                    )
+                )
+                
                 baselines.sort(reverse=True)
                 
-                print("Recent baselines:")
+                self.console.print("\n[bold]Recent baselines:[/bold]")
                 for i, baseline in enumerate(baselines[:5], 1):
-                    print(f"   {i}. {baseline}")
+                    self.console.print(f"  [cyan]{i}.[/cyan] {baseline}")
                 
-                compare = input("\nCompare with previous baseline? (y/N): ").strip().lower()
+                compare = self.console.input("\n[bold]Compare with previous baseline?[/bold] (y/N): ").strip().lower()
                 if compare == 'y':
                     if len(baselines) == 1:
                         prev_baseline = baselines[0]
                     else:
                         try:
-                            choice = int(input(f"Select baseline (1-{min(5, len(baselines))}): ")) - 1
+                            choice = int(self.console.input(f"[bold]Select baseline[/bold] (1-{min(5, len(baselines))}): ")) - 1
                             prev_baseline = baselines[choice]
                         except:
                             prev_baseline = baselines[0]
@@ -169,7 +278,13 @@ class LinuxBaselineScanner:
                     self._compare_baselines(prev_path, current_baseline)
                     
         except Exception as e:
-            print(f"Comparison offer failed: {e}")
+            self.console.print(
+                Panel.fit(
+                    f"[yellow]Comparison offer failed: {e}[/yellow]",
+                    style="yellow",
+                    title="[bold yellow]Comparison Error[/bold yellow]"
+                )
+            )
     
     def _compare_baselines(self, baseline1_path, baseline2_path):
         try:
@@ -181,21 +296,55 @@ class LinuxBaselineScanner:
             changes = self._find_changes(baseline1, baseline2)
             
             if changes:
-                print("\nCHANGES DETECTED:")
+                self.console.print(
+                    Panel.fit(
+                        f"[bold yellow]Changes Detected: {len(changes)} modifications found[/bold yellow]",
+                        style="yellow",
+                        title="[bold yellow]Baseline Changes[/bold yellow]"
+                    )
+                )
+                
+                changes_summary = []
+                self.console.print("\n[bold]Top Changes:[/bold]")
                 for change_path, change_info in list(changes.items())[:10]:
-                    print(f"   {change_path}: {change_info['action']}")
+                    action_color = {
+                        "ADDED": "green",
+                        "MODIFIED": "yellow", 
+                        "REMOVED": "red"
+                    }.get(change_info['action'], "white")
+                    
+                    self.console.print(f"  [{action_color}]{change_info['action']:>8}[/{action_color}] {change_path}")
+                    changes_summary.append(f"{change_path}: {change_info['action']}")
+                
+                # Send email notification for changes
+                self._notify_baseline_changes(len(changes), baseline2_path, changes_summary)
                 
                 comp_file = os.path.join(self.output_dir, f"comparison_{self._get_timestamp()}.json")
                 with open(comp_file, 'w') as f:
                     json.dump(changes, f, indent=2)
-                print(f"Full comparison saved to: {comp_file}")
+                self.console.print(f"\n[cyan]Full comparison saved to:[/cyan] {comp_file}")
             else:
-                print("No significant changes detected")
+                self.console.print(
+                    Panel.fit(
+                        "[green]No significant changes detected[/green]",
+                        style="green",
+                        title="[bold green]No Changes[/bold green]"
+                    )
+                )
+                # Send notification for no changes
+                self._notify_baseline_changes(0, baseline2_path)
                 
         except Exception as e:
-            print(f"Comparison failed: {e}")
+            self.console.print(
+                Panel.fit(
+                    f"[red]Comparison failed: {e}[/red]",
+                    style="red",
+                    title="[bold red]Comparison Error[/bold red]"
+                )
+            )
     
     def _find_changes(self, old, new, path=""):
+        """Find changes between two baselines - ADD THIS MISSING METHOD"""
         changes = {}
         
         all_keys = set(old.keys()) | set(new.keys())
@@ -220,6 +369,24 @@ class LinuxBaselineScanner:
         
         return changes
     
+    def _notify_scan_completion(self, scan_result):
+        """Send notification when baseline scan completes"""
+        try:
+            from core.logger import logger
+            logger.notify_baseline_scan_complete(scan_result)
+        except Exception as e:
+            self.console.print(f"[yellow]Failed to send scan completion notification: {e}[/yellow]")
+    
+    def _notify_baseline_changes(self, changes_count, scan_file, changes_list=None):
+        """Send notification about baseline changes"""
+        try:
+            from core.logger import logger
+            changes_summary = "\n".join(changes_list) if changes_list else ""
+            logger.notify_baseline_changes(changes_count, scan_file, changes_summary)
+        except Exception as e:
+            self.console.print(f"[yellow]Failed to send changes notification: {e}[/yellow]")
+
+    # ... (all your existing scan methods remain exactly the same)
     def _scan_system_info(self, config):
         try:
             system_info = {

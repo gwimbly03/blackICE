@@ -1,49 +1,33 @@
-# blackice/logger.yaml
 logging:
-  # Format: "json", "csv", or "none" to disable logging
-  format: "json"
-  
-  # Output directory for log files
-  output_dir: "logs"
-  
-  # Console output settings
+  format: 'json' #can be json or csv
+  output_dir: 'logs'
   console:
-    # Whether to show progress messages in console
     show_progress: true
-    
-    # Whether to show "Logged results from X" messages
     show_log_messages: false
-    
-    # Whether to show module start messages
     show_module_start: true
-    
-    # Whether to show module completion messages
     show_module_completion: true
-    
-  # File output settings
   file:
-    # Include timestamp in filename
     include_timestamp: true
-    
-    # File naming pattern
-    filename_pattern: "blackice_scan_{timestamp}"
-    
-    # Maximum log file size in MB (0 for no limit)
+    filename_pattern: 'blackice_scan_{timestamp}'
     max_file_size: 10
-    
-    # Keep backup logs (rotate logs)
     backup_count: 5
-    
-  # Data to include in logs
   include:
-    # Include full module results
     module_results: true
-    
-    # Include error details
     error_details: true
-    
-    # Include scan metadata
     scan_metadata: true
-    
-    # Include timing information
     timing_info: true
+  email:
+    ## Im using mailtrap for testing 
+    enabled: true  # can be true or false
+    smtp_server: 'sandbox.smtp.mailtrap.io'
+    smtp_port: 2525
+    sender_email: 'security@blackICE.com'  # sender gmail address
+    sender_username: 'da294f52f2fa19' # username
+    sender_password: '1fb4bacababd86'  # gmail app password 
+    recipient_emails:
+      - 'test1@example.com'  # alert reciver 
+      - 'recipient2@example.com'
+    notifications:
+      baseline_changes: true
+      critical_findings: true
+      scan_completion: true
