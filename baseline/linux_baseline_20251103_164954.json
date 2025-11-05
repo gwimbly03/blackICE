@@ -1,0 +1,251 @@
+{
+  "metadata": {
+    "scan_id": "linux_baseline_20251103_164954",
+    "timestamp": "2025-11-03T16:49:54.738299",
+    "scanner_version": "2.0",
+    "scan_depth": "deep",
+    "distribution": {
+      "NAME": "Arch Linux",
+      "PRETTY_NAME": "Arch Linux",
+      "ID": "arch",
+      "BUILD_ID": "rolling",
+      "ANSI_COLOR": "38;2;23;147;209",
+      "HOME_URL": "https://archlinux.org/",
+      "DOCUMENTATION_URL": "https://wiki.archlinux.org/",
+      "SUPPORT_URL": "https://bbs.archlinux.org/",
+      "BUG_REPORT_URL": "https://gitlab.archlinux.org/groups/archlinux/-/issues",
+      "PRIVACY_POLICY_URL": "https://terms.archlinux.org/docs/privacy-policy/",
+      "LOGO": "archlinux-logo"
+    }
+  },
+  "findings": [
+    {
+      "module": "system_info",
+      "check": "system_identification",
+      "status": "PASS",
+      "data": {
+        "hostname": "Megatronus",
+        "kernel": "6.17.6-zen1-1-zen",
+        "architecture": "x86_64",
+        "boot_time": "2025-11-03T08:21:16",
+        "uptime": "20395 days, 16:21:16",
+        "load_average": [
+          0.61474609375,
+          0.9541015625,
+          0.90380859375
+        ]
+      },
+      "message": "System information collected"
+    },
+    {
+      "module": "users_groups",
+      "check": "user_enumeration",
+      "status": "PASS",
+      "data": {
+        "users": [
+          {
+            "username": "root",
+            "uid": 0,
+            "gid": 0,
+            "shell": "/usr/bin/bash"
+          },
+          {
+            "username": "bin",
+            "uid": 1,
+            "gid": 1,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "daemon",
+            "uid": 2,
+            "gid": 2,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "mail",
+            "uid": 8,
+            "gid": 12,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "ftp",
+            "uid": 14,
+            "gid": 11,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "http",
+            "uid": 33,
+            "gid": 33,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "nobody",
+            "uid": 65534,
+            "gid": 65534,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "dbus",
+            "uid": 81,
+            "gid": 81,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "systemd-coredump",
+            "uid": 980,
+            "gid": 980,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "systemd-network",
+            "uid": 979,
+            "gid": 979,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "systemd-oom",
+            "uid": 978,
+            "gid": 978,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "systemd-journal-remote",
+            "uid": 977,
+            "gid": 977,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "systemd-resolve",
+            "uid": 976,
+            "gid": 976,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "systemd-timesync",
+            "uid": 975,
+            "gid": 975,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "tss",
+            "uid": 974,
+            "gid": 974,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "uuidd",
+            "uid": 973,
+            "gid": 973,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "alpm",
+            "uid": 972,
+            "gid": 972,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "polkitd",
+            "uid": 102,
+            "gid": 102,
+            "shell": "/usr/bin/nologin"
+          },
+          {
+            "username": "gwimbly",
+            "uid": 1000,
+            "gid": 1000,
+            "shell": "/usr/bin/fish"
+          },
+          {
+            "username": "avahi",
+            "uid": 970,
+            "gid": 970,
+            "shell": "/usr/bin/nologin"
+          }
+        ]
+      },
+      "message": "Enumerated 20 users"
+    },
+    {
+      "module": "network",
+      "check": "network_config",
+      "status": "PASS",
+      "data": {
+        "interface_count": 8
+      },
+      "message": "Network interfaces scanned"
+    },
+    {
+      "module": "processes",
+      "check": "process_enumeration",
+      "status": "PASS",
+      "data": {
+        "process_count": 610
+      },
+      "message": "Found 610 running processes"
+    },
+    {
+      "module": "file_integrity",
+      "check": "critical_files",
+      "status": "PASS",
+      "data": {
+        "files_scanned": 9
+      },
+      "message": "Integrity check for 9 critical files"
+    },
+    {
+      "module": "packages",
+      "check": "package_enumeration",
+      "status": "PASS",
+      "data": {
+        "package_count": 0
+      },
+      "message": "Packages enumerated"
+    },
+    {
+      "module": "cron",
+      "check": "cron_jobs",
+      "status": "PASS",
+      "data": {
+        "cron_entries": 0
+      },
+      "message": "Cron jobs scanned"
+    },
+    {
+      "module": "security",
+      "check": "security_tools",
+      "status": "PASS",
+      "data": {
+        "apparmor": "NOT_FOUND",
+        "selinux": "NOT_FOUND",
+        "ufw": "NOT_FOUND"
+      },
+      "message": "Security tools status checked"
+    },
+    {
+      "module": "kernel",
+      "check": "kernel_params",
+      "status": "PASS",
+      "message": "Kernel parameters scanned"
+    },
+    {
+      "module": "logging",
+      "check": "logging_config",
+      "status": "PASS",
+      "message": "Logging configuration scanned"
+    },
+    {
+      "module": "file_integrity",
+      "check": "suid_sgid_files",
+      "status": "PASS",
+      "message": "SUID/SGID files scanned"
+    }
+  ],
+  "summary": {
+    "total_checks": 11,
+    "passed": 11,
+    "warnings": 0,
+    "critical": 0
+  }
+}
