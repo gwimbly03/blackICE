@@ -18,7 +18,7 @@ def main():
     
     print("=" * 50)
     print("      BlackICE - Intrusion Countermeasures Electronics")
-    print("                 Version 0.1 - Alpha")
+    print("                 Version 0.2 - Alpha")
     print("=" * 50)
 
     logger.initialize()
