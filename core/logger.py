@@ -9,11 +9,17 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 class Logging:
+    """
+    This is my logging class I made for each module, it allows a user to to customize how verbose they want the logs, it allows for json or csv logs.
+    You can customize the logs through the logger.yaml file
+    """
+
     def __init__(self):
-        # Load configuration
+        """
+        This sets up the logging folder, object and loads configurations
+        """
         self.config = self._load_config()
         
-        # Set up based on config
         project_root = Path(__file__).resolve().parent.parent  # Goes from core/logger.py to blackice root
         self.output_dir = project_root / self.config['output_dir']
         self.output_dir.mkdir(exist_ok=True)
@@ -23,11 +29,11 @@ class Logging:
         self.output_format = self.config['format']
 
     def _load_config(self) -> Dict[str, Any]:
-        """Load configuration from YAML file in project root"""
-        # Config file is in project root (blackice/logger.yaml)
+        """
+        Loads the config from the logger.yaml if the file is not found then it will create on in the root of the project
+        """
         config_path = Path(__file__).resolve().parent.parent / "logger.yaml"
         
-        # Default configuration
         default_config = {
             'format': 'json',
             'output_dir': 'logs',
@@ -70,13 +76,11 @@ class Logging:
                 print(f"Loading logger configuration from: {config_path}")
                 with open(config_path, 'r') as f:
                     loaded_config = yaml.safe_load(f)
-                    # Merge with defaults (loaded config overrides defaults)
                     if 'logging' in loaded_config:
                         return self._deep_merge(default_config, loaded_config['logging'])
                     else:
                         return default_config
             else:
-                # Create default config file if it doesn't exist
                 with open(config_path, 'w') as f:
                     yaml.dump({'logging': default_config}, f, default_flow_style=False)
                 print(f"Created default configuration file: {config_path}")
@@ -86,7 +90,9 @@ class Logging:
             return default_config
 
     def _deep_merge(self, base: Dict, update: Dict) -> Dict:
-        """Recursively merge two dictionaries"""
+        """
+        recursively merge two dictionaries
+        """
         result = base.copy()
         for key, value in update.items():
             if isinstance(value, dict) and key in result and isinstance(result[key], dict):
@@ -96,14 +102,18 @@ class Logging:
         return result
 
     def initialize(self):
-        """Initialize logging system - now uses config instead of user input"""
+        """
+        Initialize logging system which uses config in the logger.yaml 
+        """
         if self.output_format is None or self.output_format == "none":
             print("Logging disabled by configuration.")
         else:
             print(f"Logging initialized: {self.output_format.upper()} format")
 
     def log_module_start(self, module_name: str, target: str):
-        """Log when a module starts execution"""
+        """
+        When a module starts to run it will be logged
+        """
         if self.config['console']['show_module_start']:
             print(f"Starting module: {module_name} on {target}")
             
@@ -117,14 +127,15 @@ class Logging:
         self.entries.append(entry)
 
     def log_module_result(self, module_name: str, target: str, result: Dict[str, Any]):
-        """Log module results with metadata."""
+        """
+        Log module results with metadata
+        """
         if self.config['console']['show_module_completion']:
             print(f"Module {module_name} completed")
             
         if self.config['console']['show_log_messages']:
             print(f"Logged results from {module_name}")
 
-        # Filter result data based on configuration
         filtered_result = self._filter_result_data(result)
         
         entry = {
@@ -137,7 +148,9 @@ class Logging:
         self.entries.append(entry)
 
     def log_error(self, module_name: str, target: str, error: str):
-        """Log module errors"""
+        """
+        Log module errors
+        """
         print(f"Error in {module_name}: {error}")
         
         error_data = {"error": error}
@@ -154,7 +167,9 @@ class Logging:
         self.entries.append(entry)
 
     def _filter_result_data(self, result: Dict[str, Any]) -> Dict[str, Any]:
-        """Filter result data based on configuration"""
+        """
+        Filter result data based on config
+        """
         filtered = result.copy()
         
         if not self.config['include']['module_results']:
@@ -166,11 +181,12 @@ class Logging:
         return filtered
 
     def finalize(self):
-        """Finalize logging and write to file based on configuration"""
+        """
+        Finalize the logging then write to file based on the config in the logger.yaml
+        """
         if self.output_format is None or self.output_format == "none":
             return
 
-        # Prepare metadata based on configuration
         metadata = {}
         if self.config['include']['scan_metadata']:
             end_time = datetime.now()
@@ -188,7 +204,9 @@ class Logging:
             self._write_csv(metadata)
 
     def _write_json(self, metadata):
-        """Write results to JSON file"""
+        """
+        Save the results to json file
+        """
         filename = self._generate_filename("json")
         data = {"metadata": metadata, "entries": self.entries} if metadata else {"entries": self.entries}
         
@@ -197,19 +215,19 @@ class Logging:
         print(f"JSON log saved to {filename}")
 
     def _write_csv(self, metadata):
-        """Write results to CSV file"""
+        """
+        Save the results to csv file
+        """
         filename = self._generate_filename("csv")
         
         with open(filename, "w", newline="") as f:
             writer = csv.writer(f)
             
-            # Write metadata as comments
             if metadata:
                 for key, value in metadata.items():
                     writer.writerow([f"# {key}: {value}"])
                 writer.writerow([])
             
-            # Write headers and data
             writer.writerow(["timestamp", "module", "target", "event", "result_json"])
             for entry in self.entries:
                 writer.writerow([
@@ -222,7 +240,9 @@ class Logging:
         print(f"CSV log saved to {filename}")
 
     def _generate_filename(self, extension: str) -> Path:
-        """Generate filename based on configuration"""
+        """
+        Generate filename based on config in logger.yaml
+        """
         if self.config['file']['include_timestamp']:
             timestamp = self.start_time.strftime("%Y%m%d_%H%M%S")
             pattern = self.config['file']['filename_pattern'].format(timestamp=timestamp)
@@ -233,7 +253,9 @@ class Logging:
         return self.output_dir / filename
 
     def _calculate_scan_summary(self, findings):
-        """Calculate summary statistics from scan findings"""
+        """
+        Calculate summary statistics from scan findings
+        """
         if not findings:
             return {}
         
@@ -251,7 +273,9 @@ class Logging:
         }
 
     def _get_system_info(self):
-        """Get basic system information for email notifications"""
+        """
+        Get basic system information for email notifications
+        """
         import platform
         return f"{platform.node()} ({platform.system()} {platform.release()})"
 
@@ -260,7 +284,6 @@ class Logging:
         if not changes:
             return "No changes detected since last scan"
         
-        # Group changes by type
         changes_by_type = {}
         for change in changes:
             change_type = change.get('type', 'UNKNOWN')
@@ -278,20 +301,16 @@ class Logging:
                 formatted_output.append(f"\n{i}. Module: {change.get('module', 'Unknown')}")
                 formatted_output.append(f"   Description: {change.get('description', 'No description')}")
                 
-                # Add specific details based on change type
                 if change_type == "CHANGED":
                     prev = change.get('previous', {})
                     curr = change.get('current', {})
                     
-                    # Show status changes
                     if prev.get('status') != curr.get('status'):
                         formatted_output.append(f"   Status: {prev.get('status')} → {curr.get('status')}")
                     
-                    # Show file hash changes
                     if prev.get('hash') and curr.get('hash') and prev.get('hash') != curr.get('hash'):
                         formatted_output.append(f"   File Hash: {prev.get('hash')[:16]}... → {curr.get('hash')[:16]}...")
                     
-                    # Show count changes
                     count_fields = ['process_count', 'package_count', 'users_count', 'groups_count', 'interface_count', 'cron_entries']
                     for field in count_fields:
                         if prev.get(field) != curr.get(field):
@@ -312,25 +331,26 @@ class Logging:
         return "\n".join(formatted_output)
 
     def send_email_notification(self, subject: str, message: str, is_critical: bool = False):
-        """Send email notification based on configuration"""
+        """
+        Send email notification based on configuration
+        """
         email_config = self.config.get('email', {})
         
         # Debug: Check email configuration
-        print(f"DEBUG: Email enabled: {email_config.get('enabled', False)}")
-        print(f"DEBUG: SMTP Server: {email_config.get('smtp_server')}")
-        print(f"DEBUG: Sender: {email_config.get('sender_email')}")
-        print(f"DEBUG: Recipients: {email_config.get('recipient_emails', [])}")
+        #print(f"DEBUG: Email enabled: {email_config.get('enabled', False)}")
+        #print(f"DEBUG: SMTP Server: {email_config.get('smtp_server')}")
+        #print(f"DEBUG: Sender: {email_config.get('sender_email')}")
+        #print(f"DEBUG: Recipients: {email_config.get('recipient_emails', [])}")
         
         if not email_config.get('enabled', False):
-            print("DEBUG: Email notifications are disabled in configuration")
+            #print("DEBUG: Email notifications are disabled in configuration")
             return False
             
         if is_critical and not email_config.get('notifications', {}).get('critical_findings', True):
-            print("DEBUG: Critical notifications are disabled")
+            #print("DEBUG: Critical notifications are disabled")
             return False
             
         try:
-            # Email configuration
             smtp_server = email_config.get('smtp_server', 'sandbox.smtp.mailtrap.io')
             smtp_port = email_config.get('smtp_port', 2525)
             sender_email = email_config.get('sender_email')
@@ -338,30 +358,27 @@ class Logging:
             sender_password = email_config.get('sender_password')
             recipient_emails = email_config.get('recipient_emails', [])
             
-            # Validate configuration
             if not sender_email:
-                print("DEBUG: No sender_email configured")
+                #print("DEBUG: No sender_email configured")
                 return False
             if not sender_password:
-                print("DEBUG: No sender_password configured")
+                #print("DEBUG: No sender_password configured")
                 return False
             if not recipient_emails:
-                print("DEBUG: No recipient_emails configured")
+                #print("DEBUG: No recipient_emails configured")
                 return False
             
             # Use username for login, fallback to sender_email if username not provided
             login_username = sender_username if sender_username else sender_email
             
-            print(f"DEBUG: Attempting to send email via {smtp_server}:{smtp_port}")
-            print(f"DEBUG: Login username: {login_username}")
+            #print(f"DEBUG: Attempting to send email via {smtp_server}:{smtp_port}")
+            #print(f"DEBUG: Login username: {login_username}")
             
-            # Create message
             msg = MIMEMultipart()
             msg['From'] = sender_email
             msg['To'] = ', '.join(recipient_emails)
             msg['Subject'] = f"BlackICE Alert: {subject}"
 
-            # Add message body
             body = f"""
 BlackICE Security Scanner Notification
 
@@ -373,14 +390,13 @@ System: {self._get_system_info()}
             """
             msg.attach(MIMEText(body, 'plain'))
             
-            # Send email
-            print(f"DEBUG: Connecting to SMTP server...")
+            #print(f"DEBUG: Connecting to SMTP server...")
             with smtplib.SMTP(smtp_server, smtp_port) as server:
-                print(f"DEBUG: Starting TLS...")
+                #print(f"DEBUG: Starting TLS...")
                 server.starttls()
-                print(f"DEBUG: Logging in...")
+                #print(f"DEBUG: Logging in...")
                 server.login(login_username, sender_password)
-                print(f"DEBUG: Sending message...")
+                #print(f"DEBUG: Sending message...")
                 server.send_message(msg)
             
             print(f"Email notification sent successfully: {subject}")
@@ -393,31 +409,30 @@ System: {self._get_system_info()}
             return False
 
     def notify_baseline_scan_complete(self, scan_result: Dict[str, Any]):
-        """Send single notification when baseline scan completes with comparison results"""
+        """
+        Send single notification when baseline scan completes with comparison results
+        """
         email_config = self.config.get('email', {})
         
-        print(f"DEBUG: Starting notify_baseline_scan_complete")
-        print(f"DEBUG: Email enabled: {email_config.get('enabled', False)}")
-        print(f"DEBUG: Scan completion notifications enabled: {email_config.get('notifications', {}).get('scan_completion', True)}")
+        #print(f"DEBUG: Starting notify_baseline_scan_complete")
+        #print(f"DEBUG: Email enabled: {email_config.get('enabled', False)}")
+        #print(f"DEBUG: Scan completion notifications enabled: {email_config.get('notifications', {}).get('scan_completion', True)}")
         
         if not email_config.get('enabled', False):
-            print("DEBUG: Email is disabled, skipping notification")
+            #print("DEBUG: Email is disabled, skipping notification")
             return
             
         if not email_config.get('notifications', {}).get('scan_completion', True):
-            print("DEBUG: Scan completion notifications are disabled")
+            #print("DEBUG: Scan completion notifications are disabled")
             return
         
-        # Get scan summary
         findings = scan_result.get('findings', [])
         summary = self._calculate_scan_summary(findings)
         
-        # Check if there are comparison results
         comparison_result = scan_result.get('comparison', {})
         changes_count = comparison_result.get('changes_count', 0)
         changes = comparison_result.get('changes', [])
         
-        # Determine subject and critical status
         is_critical = summary.get('critical', 0) > 0 or changes_count > 0
         
         if changes_count > 0:
@@ -425,10 +440,8 @@ System: {self._get_system_info()}
         else:
             subject = "Baseline Scan Complete - No Changes"
         
-        # Build the comprehensive message
         message_parts = []
         
-        # Scan completion info
         message_parts.append(f"""
 Baseline scan completed successfully.
 
@@ -443,7 +456,6 @@ SCAN SUMMARY:
 - Unknown: {summary.get('unknown', 0)}
 """)
         
-        # Add comparison results if available
         if comparison_result:
             message_parts.append(f"""
 COMPARISON RESULTS:
@@ -452,12 +464,10 @@ COMPARISON RESULTS:
 - Current scan: {comparison_result.get('current_scan_id', 'Unknown')}
 """)
             
-            # Add detailed changes if any
             if changes_count > 0:
                 detailed_changes = self._format_changes_for_email(changes)
                 message_parts.append(f"\nDETAILED CHANGES:\n{detailed_changes}")
         
-        # Add critical alert if needed
         if is_critical:
             critical_alerts = []
             if summary.get('critical', 0) > 0:
@@ -469,11 +479,10 @@ COMPARISON RESULTS:
         else:
             message_parts.append("\nNo critical issues detected")
         
-        # Combine all message parts
         full_message = "".join(message_parts)
         
-        print(f"DEBUG: Sending email with subject: {subject}")
-        print(f"DEBUG: Is critical: {is_critical}")
+        #print(f"DEBUG: Sending email with subject: {subject}")
+        #print(f"DEBUG: Is critical: {is_critical}")
         
         success = self.send_email_notification(subject, full_message, is_critical=is_critical)
         
