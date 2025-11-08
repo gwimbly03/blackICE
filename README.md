@@ -6,7 +6,7 @@ Advanced, modular pentesting engine written in Python — a collection of scanne
 
 ## Table of Contents
 
-- [Features](features-what-has-been-implemented-so-far)  
+- [Features](#features-what-has-been-implemented-so-far)  
 - [Prerequisites](#prerequisites)  
 - [Installation](#installation)  
 - [Configuration](#configuration)  
