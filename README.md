@@ -1,6 +1,6 @@
 # BlackICE
 
-Advanced, modular pentesting engine written in Python — a collection of scanners and attack modules with a configurable logger and notification system.
+Advanced, modular pentesting engine written in Python, a collection of scanners and attack modules with a configurable logger and notification system so far.
 
 ---
 
