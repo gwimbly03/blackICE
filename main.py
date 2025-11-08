@@ -35,6 +35,7 @@ def main():
             "vuln_scan", "ssl_scan", "web_vuln_scan"
         ]},
         "3": {"name": "Wireless", "modules": [
+            "dns_cache_poisoning", "ddos_attacks", "arp_spoofing"
         ]},
         "4": {"name": "Exploitation", "modules": [
         ]},
