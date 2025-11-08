@@ -4,7 +4,7 @@ import yaml
 import smtplib
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -51,16 +51,16 @@ class Logging:
             },
             'email': {
                 'enabled': False,
-                'smtp_server': 'sandbox.smtp.mailtrap.io',  # Changed to Mailtrap default
-                'smtp_port': 2525,  # Changed to Mailtrap port
-                'sender_email': '',
-                'sender_username': '',  # ADDED: Mailtrap username field
-                'sender_password': '',
+                'smtp_server': 'sandbox.smtp.mailtrap.io',
+                'smtp_port': 2525,
+                'sender_email': 'security@blackICE.com',
+                'sender_username': 'da294f52f2fa19',
+                'sender_password': '1fb4bacababd86',
                 'recipient_emails': [],
                 'notifications': {
                     'baseline_changes': True,
                     'critical_findings': True,
-                    'scan_completion': True  # Changed to true
+                    'scan_completion': True
                 }
             }
         }
@@ -232,39 +232,128 @@ class Logging:
             
         return self.output_dir / filename
 
-    # Email notification methods
+    def _calculate_scan_summary(self, findings):
+        """Calculate summary statistics from scan findings"""
+        if not findings:
+            return {}
+        
+        status_counts = {}
+        for finding in findings:
+            status = finding.get('status', 'UNKNOWN')
+            status_counts[status] = status_counts.get(status, 0) + 1
+        
+        return {
+            'total_checks': len(findings),
+            'passed': status_counts.get('PASS', 0),
+            'warnings': status_counts.get('WARNING', 0),
+            'critical': status_counts.get('CRITICAL', 0),
+            'unknown': status_counts.get('UNKNOWN', 0)
+        }
+
+    def _get_system_info(self):
+        """Get basic system information for email notifications"""
+        import platform
+        return f"{platform.node()} ({platform.system()} {platform.release()})"
+
+    def _format_changes_for_email(self, changes: List[Dict[str, Any]]) -> str:
+        """Format changes in a readable way for email"""
+        if not changes:
+            return "No changes detected since last scan"
+        
+        # Group changes by type
+        changes_by_type = {}
+        for change in changes:
+            change_type = change.get('type', 'UNKNOWN')
+            if change_type not in changes_by_type:
+                changes_by_type[change_type] = []
+            changes_by_type[change_type].append(change)
+        
+        formatted_output = []
+        
+        for change_type, type_changes in changes_by_type.items():
+            formatted_output.append(f"\n{change_type} CHANGES ({len(type_changes)}):")
+            formatted_output.append("=" * 50)
+            
+            for i, change in enumerate(type_changes, 1):
+                formatted_output.append(f"\n{i}. Module: {change.get('module', 'Unknown')}")
+                formatted_output.append(f"   Description: {change.get('description', 'No description')}")
+                
+                # Add specific details based on change type
+                if change_type == "CHANGED":
+                    prev = change.get('previous', {})
+                    curr = change.get('current', {})
+                    
+                    # Show status changes
+                    if prev.get('status') != curr.get('status'):
+                        formatted_output.append(f"   Status: {prev.get('status')} → {curr.get('status')}")
+                    
+                    # Show file hash changes
+                    if prev.get('hash') and curr.get('hash') and prev.get('hash') != curr.get('hash'):
+                        formatted_output.append(f"   File Hash: {prev.get('hash')[:16]}... → {curr.get('hash')[:16]}...")
+                    
+                    # Show count changes
+                    count_fields = ['process_count', 'package_count', 'users_count', 'groups_count', 'interface_count', 'cron_entries']
+                    for field in count_fields:
+                        if prev.get(field) != curr.get(field):
+                            formatted_output.append(f"   {field}: {prev.get(field)} → {curr.get(field)}")
+                
+                elif change_type == "NEW":
+                    new_finding = change.get('finding', {})
+                    if new_finding.get('check'):
+                        formatted_output.append(f"   File: {new_finding.get('check')}")
+                    if new_finding.get('hash'):
+                        formatted_output.append(f"   Hash: {new_finding.get('hash')[:16]}...")
+                
+                elif change_type == "REMOVED":
+                    removed_finding = change.get('finding', {})
+                    if removed_finding.get('check'):
+                        formatted_output.append(f"   File: {removed_finding.get('check')}")
+        
+        return "\n".join(formatted_output)
+
     def send_email_notification(self, subject: str, message: str, is_critical: bool = False):
         """Send email notification based on configuration"""
         email_config = self.config.get('email', {})
         
-        # Check if email is enabled
-        #if not email_config.get('enabled', False):
-        #    print("DEBUG: Email notifications are disabled in configuration")
-        #    return False
+        # Debug: Check email configuration
+        print(f"DEBUG: Email enabled: {email_config.get('enabled', False)}")
+        print(f"DEBUG: SMTP Server: {email_config.get('smtp_server')}")
+        print(f"DEBUG: Sender: {email_config.get('sender_email')}")
+        print(f"DEBUG: Recipients: {email_config.get('recipient_emails', [])}")
+        
+        if not email_config.get('enabled', False):
+            print("DEBUG: Email notifications are disabled in configuration")
+            return False
             
-        # Check notification preferences
-        #if is_critical and not email_config.get('notifications', {}).get('critical_findings', True):
-        #    print("DEBUG: Critical notifications are disabled")
-        #    return False
+        if is_critical and not email_config.get('notifications', {}).get('critical_findings', True):
+            print("DEBUG: Critical notifications are disabled")
+            return False
             
         try:
             # Email configuration
             smtp_server = email_config.get('smtp_server', 'sandbox.smtp.mailtrap.io')
             smtp_port = email_config.get('smtp_port', 2525)
             sender_email = email_config.get('sender_email')
-            sender_username = email_config.get('sender_username')  # Get Mailtrap username
+            sender_username = email_config.get('sender_username')
             sender_password = email_config.get('sender_password')
             recipient_emails = email_config.get('recipient_emails', [])
             
-            print(f"DEBUG: Attempting to send email via {smtp_server}:{smtp_port}")
-            print(f"DEBUG: Username: {sender_username}, Sender: {sender_email}")
-            
-            if not sender_email or not sender_password or not recipient_emails:
-                print("Email configuration incomplete. Check logger.yaml")
+            # Validate configuration
+            if not sender_email:
+                print("DEBUG: No sender_email configured")
+                return False
+            if not sender_password:
+                print("DEBUG: No sender_password configured")
+                return False
+            if not recipient_emails:
+                print("DEBUG: No recipient_emails configured")
                 return False
             
             # Use username for login, fallback to sender_email if username not provided
             login_username = sender_username if sender_username else sender_email
+            
+            print(f"DEBUG: Attempting to send email via {smtp_server}:{smtp_port}")
+            print(f"DEBUG: Login username: {login_username}")
             
             # Create message
             msg = MIMEMultipart()
@@ -285,86 +374,112 @@ System: {self._get_system_info()}
             msg.attach(MIMEText(body, 'plain'))
             
             # Send email
-       #     print(f"DEBUG: Connecting to SMTP server...")
+            print(f"DEBUG: Connecting to SMTP server...")
             with smtplib.SMTP(smtp_server, smtp_port) as server:
-        #        print(f"DEBUG: Starting TLS...")
+                print(f"DEBUG: Starting TLS...")
                 server.starttls()
-         #       print(f"DEBUG: Logging in with username: {login_username}")
+                print(f"DEBUG: Logging in...")
                 server.login(login_username, sender_password)
-          #      print(f"DEBUG: Sending message...")
+                print(f"DEBUG: Sending message...")
                 server.send_message(msg)
             
-            print(f"Email notification sent: {subject}")
+            print(f"Email notification sent successfully: {subject}")
             return True
             
         except Exception as e:
             print(f"Failed to send email notification: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
-    def _get_system_info(self):
-        """Get basic system information for email notifications"""
-        import platform
-        return f"{platform.node()} ({platform.system()} {platform.release()})"
-
-    def notify_baseline_changes(self, changes_count: int, scan_file: str, changes_summary: str = ""):
-        """Send notification about baseline changes"""
-        #print(f"DEBUG: notify_baseline_changes called - {changes_count} changes")
-        email_config = self.config.get('email', {})
-        if not email_config.get('notifications', {}).get('baseline_changes', True):
-         #   print("DEBUG: Baseline change notifications disabled")
-            return
-            
-        if changes_count > 0:
-            subject = f"Baseline Changes Detected ({changes_count} changes)"
-            message = f"""
-ALERT: System baseline changes detected!
-
-Scan File: {scan_file}
-Changes Found: {changes_count}
-
-Summary of Changes:
-{changes_summary}
-
-Review the comparison file for detailed information.
-            """
-            self.send_email_notification(subject, message, is_critical=True)
-        else:
-            subject = "Baseline Scan Completed - No Changes"
-            message = f"""
-Baseline scan completed successfully.
-
-Scan File: {scan_file}
-Status: No significant changes detected
-
-System appears to be in expected state.
-            """
-            self.send_email_notification(subject, message, is_critical=False)
-
     def notify_baseline_scan_complete(self, scan_result: Dict[str, Any]):
-        """Send notification when baseline scan completes"""
-        #print(f"DEBUG: notify_baseline_scan_complete called")
+        """Send single notification when baseline scan completes with comparison results"""
         email_config = self.config.get('email', {})
-        if not email_config.get('notifications', {}).get('scan_completion', True):
-         #   print("DEBUG: Scan completion notifications disabled")
+        
+        print(f"DEBUG: Starting notify_baseline_scan_complete")
+        print(f"DEBUG: Email enabled: {email_config.get('enabled', False)}")
+        print(f"DEBUG: Scan completion notifications enabled: {email_config.get('notifications', {}).get('scan_completion', True)}")
+        
+        if not email_config.get('enabled', False):
+            print("DEBUG: Email is disabled, skipping notification")
             return
             
-        subject = "Baseline Scan Completed"
-        summary = scan_result.get('data', {}).get('summary', {})
+        if not email_config.get('notifications', {}).get('scan_completion', True):
+            print("DEBUG: Scan completion notifications are disabled")
+            return
         
-        message = f"""
+        # Get scan summary
+        findings = scan_result.get('findings', [])
+        summary = self._calculate_scan_summary(findings)
+        
+        # Check if there are comparison results
+        comparison_result = scan_result.get('comparison', {})
+        changes_count = comparison_result.get('changes_count', 0)
+        changes = comparison_result.get('changes', [])
+        
+        # Determine subject and critical status
+        is_critical = summary.get('critical', 0) > 0 or changes_count > 0
+        
+        if changes_count > 0:
+            subject = f"Baseline Scan Complete - {changes_count} Changes Detected"
+        else:
+            subject = "Baseline Scan Complete - No Changes"
+        
+        # Build the comprehensive message
+        message_parts = []
+        
+        # Scan completion info
+        message_parts.append(f"""
 Baseline scan completed successfully.
 
 Scan ID: {scan_result.get('scan_id', 'Unknown')}
-Output File: {scan_result.get('output_file', 'Unknown')}
+Timestamp: {scan_result.get('timestamp', 'Unknown')}
 
-Scan Summary:
+SCAN SUMMARY:
 - Total Checks: {summary.get('total_checks', 0)}
 - Passed: {summary.get('passed', 0)}
 - Warnings: {summary.get('warnings', 0)}
 - Critical: {summary.get('critical', 0)}
-
-System: {self._get_system_info()}
-        """
-        self.send_email_notification(subject, message, is_critical=False)
+- Unknown: {summary.get('unknown', 0)}
+""")
+        
+        # Add comparison results if available
+        if comparison_result:
+            message_parts.append(f"""
+COMPARISON RESULTS:
+- Changes since last scan: {changes_count}
+- Previous scan: {comparison_result.get('previous_scan_id', 'Unknown')}
+- Current scan: {comparison_result.get('current_scan_id', 'Unknown')}
+""")
+            
+            # Add detailed changes if any
+            if changes_count > 0:
+                detailed_changes = self._format_changes_for_email(changes)
+                message_parts.append(f"\nDETAILED CHANGES:\n{detailed_changes}")
+        
+        # Add critical alert if needed
+        if is_critical:
+            critical_alerts = []
+            if summary.get('critical', 0) > 0:
+                critical_alerts.append(f"{summary.get('critical', 0)} critical findings")
+            if changes_count > 0:
+                critical_alerts.append(f"{changes_count} system changes")
+            
+            message_parts.append(f"\nCRITICAL ALERT: {', '.join(critical_alerts)} - IMMEDIATE ATTENTION REQUIRED")
+        else:
+            message_parts.append("\nNo critical issues detected")
+        
+        # Combine all message parts
+        full_message = "".join(message_parts)
+        
+        print(f"DEBUG: Sending email with subject: {subject}")
+        print(f"DEBUG: Is critical: {is_critical}")
+        
+        success = self.send_email_notification(subject, full_message, is_critical=is_critical)
+        
+        if success:
+            print("DEBUG: Email sent successfully")
+        else:
+            print("DEBUG: Failed to send email")
 
 logger = Logging()
