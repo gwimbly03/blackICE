@@ -11,9 +11,18 @@ Advanced, modular pentesting engine written in Python — a collection of scanne
 - [Installation](#installation)  
 - [Configuration](#configuration)  
 - [Usage](#usage)  
-  - [Run the program](#run-the-program)  
-- [Milestone 1 — Delivered](#milestone-1---delivered)  
-- [Directory layout (example)](#directory-layout-example) ---
+  - [Run the program](#1-run-the-program) 
+- [Directory layout](#directory-layout) 
+- [What I delivered in Milestone 1](#what-i-delivered-in-milestone-1)  
+
+---
+## Features (What has been implemented so far)
+
+* Modular engine that discovers and runs modules from the modules/ directory.
+* Custom logging system — can write logs in JSON or CSV, configurable via YAML.
+* Terminal and email notifications summarizing module runs and baseline diffs.
+
+---
 
 ## Prerequisites
 
@@ -41,45 +50,43 @@ Use a virtual environment to keep dependencies isolated.
 Upon first run blackICE will create a logger.yaml, logs folder and baseline folder for configuration purposes.   
 
 ```
-'format': 'json',
-            'output_dir': 'logs',
-            'console': {
-                'show_progress': True,
-                'show_log_messages': False,
-                'show_module_start': True,
-                'show_module_completion': True
-            },
-            'file': {
-                'include_timestamp': True,
-                'filename_pattern': 'blackice_scan_{timestamp}',
-                'max_file_size': 10,
-                'backup_count': 5
-            },
-            'include': {
-                'module_results': True,
-                'error_details': True,
-                'scan_metadata': True,
-                'timing_info': True
-            },
-            'email': {
-                'enabled': False,
-                'smtp_server': 'smtp.example-address.com',
-                'smtp_port': 587,
-                'sender_email': 'security@blackICE.com',
-                'sender_username': 'yourusername',
-                'sender_password': 'yourpasswd',
-                'recipient_emails': [],
-                'notifications': {
-                    'baseline_changes': True,
-                    'critical_findings': True,
-                    'scan_completion': True
-                }
-            }
-        }
-
-
+'format': 'json' or 'csv'
+'output_dir': 'logs',
+'console': {
+    'show_progress': True,
+    'show_log_messages': False,
+    'show_module_start': True,
+    'show_module_completion': True
+},
+'file': {
+    'include_timestamp': True,
+    'filename_pattern': 'blackice_scan_{timestamp}',
+    'max_file_size': 10,
+    'backup_count': 5
+},
+'include': {
+    'module_results': True,
+    'error_details': True,
+    'scan_metadata': True,
+    'timing_info': True
+},
+'email': {
+    'enabled': False,
+    'smtp_server': 'smtp.example-address.com',
+    'smtp_port': 587,
+    'sender_email': 'security@blackICE.com',
+    'sender_username': 'yourusername',
+    'sender_password': 'yourpasswd',
+    'recipient_emails': [],
+    'notifications': {
+        'baseline_changes': True,
+        'critical_findings': True,
+        'scan_completion': True
+    }
+}
 ```
 
+You can specify the directory you want to save the logs if you have a different place you want them.
 
 ---
 
