@@ -36,7 +36,7 @@ Advanced, modular pentesting engine written in Python — a collection of scanne
 1. Clone the repository (if you haven't already):
 
 ```bash
-git clone https://github.com/yourusername/blackICE.git
+git clone https://github.com/towelie03/blackICE.git
 cd blackICE
 pip install -r requirements.txt
 
