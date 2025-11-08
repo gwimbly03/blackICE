@@ -125,7 +125,7 @@ blackICE/
 
 ## What I delivered in Milestone 1
 
-* Custom logger — outputs logs in JSON or CSV and takes configuration from a YAML file.
+* Custom logger that outputs logs in JSON or CSV and takes configuration from a YAML file.
 * Notifiactions that notify the user by email and on the terminal about when a module is ran and when it finishes executing. The email will display the scan summary and the difference between the new and previous scan, allowing comparsion of the baseline.
 * Added new modules to the pentester, they are OWASP Top 10 scan, DDOS attack, DNS poisioning and ARP spoofing.
 
