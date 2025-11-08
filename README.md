@@ -50,40 +50,39 @@ Use a virtual environment to keep dependencies isolated.
 Upon first run blackICE will create a logger.yaml, logs folder and baseline folder for configuration purposes.   
 
 ```
-'format': 'json' or 'csv'
-'output_dir': 'logs',
-'console': {
-    'show_progress': True,
-    'show_log_messages': False,
-    'show_module_start': True,
-    'show_module_completion': True
-},
-'file': {
-    'include_timestamp': True,
-    'filename_pattern': 'blackice_scan_{timestamp}',
-    'max_file_size': 10,
-    'backup_count': 5
-},
-'include': {
-    'module_results': True,
-    'error_details': True,
-    'scan_metadata': True,
-    'timing_info': True
-},
-'email': {
-    'enabled': False,
-    'smtp_server': 'smtp.example-address.com',
-    'smtp_port': 587,
-    'sender_email': 'security@blackICE.com',
-    'sender_username': 'yourusername',
-    'sender_password': 'yourpasswd',
-    'recipient_emails': [],
-    'notifications': {
-        'baseline_changes': True,
-        'critical_findings': True,
-        'scan_completion': True
-    }
-}
+logging:
+  format: 'json' #can be json or csv
+  output_dir: 'logs'
+  console:
+    show_progress: true
+    show_log_messages: false
+    show_module_start: true
+    show_module_completion: true
+  file:
+    include_timestamp: true
+    filename_pattern: 'blackice_scan_{timestamp}'
+    max_file_size: 10
+    backup_count: 5
+  include:
+    module_results: true
+    error_details: true
+    scan_metadata: true
+    timing_info: true
+  email:
+    ## Im using mailtrap for testing
+    enabled: true  # can be true or false
+    smtp_server: 'example.smpt.com'
+    smtp_port: 2525
+    sender_email: 'example@blackICE.com'  
+    sender_username: 'username' 
+    sender_password: 'password'  
+    recipient_emails:
+      - 'test1@example.com' 
+      - 'recipient2@example.com'
+    notifications:
+      baseline_changes: true
+      critical_findings: true
+      scan_completion: true
 ```
 
 You can specify the directory you want to save the logs if you have a different place you want them.
