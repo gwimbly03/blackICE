@@ -12,7 +12,6 @@ Advanced, modular pentesting engine written in Python — a collection of scanne
 - [Configuration](#configuration)  
 - [Usage](#usage)  
   - [Run the program](#run-the-program)  
-  - [Log options](#log-options)  
 - [Milestone 1 — Delivered](#milestone-1---delivered)  
 - [Directory layout (example)](#directory-layout-example) ---
 
@@ -37,7 +36,7 @@ Use a virtual environment to keep dependencies isolated.
 
 ---
 
-### Configuration 
+## Configuration 
 
 Upon first run blackICE will create a logger.yaml, logs folder and baseline folder for configuration purposes.   
 
@@ -86,7 +85,7 @@ Upon first run blackICE will create a logger.yaml, logs folder and baseline fold
 
 ## Usage
 
-### 1. Run the script
+### 1. Run the program
 
 Start the program with:
 
@@ -101,7 +100,7 @@ When the program starts, it will:
 4. Save logs to the logs/ folder
 
 ---
-### Directory Layout 
+## Directory Layout 
 ```
 blackICE/
 ├─ core/
