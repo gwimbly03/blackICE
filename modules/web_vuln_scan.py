@@ -388,7 +388,7 @@ class WebVulnerabilityScanner:
           Lack of rate limiting on login-like endpoints (detectable by absence of 429/lockout).
           Exposed action-like GET endpoints (e.g., endpoints that look like they change state).
         """
-        print("Testing Insecure Design (A04)...")
+        print("Testing Insecure Design...")
 
         candidate_paths = ['login', 'api/login', 'auth', 'admin', 'user/login']
         burst_count = 5  
