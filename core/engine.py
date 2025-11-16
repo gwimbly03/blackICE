@@ -1,12 +1,13 @@
 import importlib
 import os
-from core.logger import log_info, log_error
+from core.logger import logger
 
 MODULES_DIR = "modules"
 
 class PentestEngine:
     """
-    This class allows me to load custom modules to use with my vulnerability scanner, if modules are put inside the ../modules/ folder then it can automatically grab the modules.
+    This class allows me to load custom modules to use with my vulnerability scanner, 
+    if modules are put inside the ../modules/ folder then it can automatically grab the modules.
     Each module must be in it own class and implement a run() method and a description to explain what the module does 
     """
     def __init__(self):
@@ -19,7 +20,9 @@ class PentestEngine:
         """
         Discover all the modules in the ../modules/ folder then tries to import them
         """
-        log_info("Discovering modules...")
+        print("Discovering modules...")
+        loaded_count = 0
+        
         for file in os.listdir(MODULES_DIR):
             if file.endswith(".py") and file != "__init__.py":
                 module_name = file[:-3]
@@ -38,22 +41,33 @@ class PentestEngine:
                     if module_class:
                         module_instance = module_class()
                         self.modules[module_name] = module_instance
-                        log_info(f"Loaded module: {module_name}")
+                        loaded_count += 1
                     else:
-                        log_error(f"Module {module_name} has no valid class with 'run' method")
+                        print(f"Failed to load {module_name}: Module has no valid class with 'run' method and 'description'")
                         
                 except Exception as e:
-                    log_error(f"Failed to load {module_name}: {e}")
+                    print(f"Failed to load {module_name}: {e}")
+
+        print(f"Loaded {loaded_count} modules")
 
     def run_module(self, module_name):
         """
-        Runs the specified module 
+        Runs the specified module with logging integration
         """
         if module_name in self.modules:
             try:
-                log_info(f"Running module: {module_name}")
+                print(f"Running module: {module_name}")
+                
+                logger.log_module_start(module_name, "pending_user_input")
+                
                 self.modules[module_name].run()
+                
             except Exception as e:
-                log_error(f"Error running {module_name}: {e}")
+                error_msg = f"Error running {module_name}: {e}"
+                print(f"Error: {error_msg}")
+                logger.log_error(module_name, "unknown_target", error_msg)
         else:
-            log_error(f"Module {module_name} not found")
+            error_msg = f"Module {module_name} not found"
+            print(f"Error: {error_msg}")
+            logger.log_error("engine", "system", error_msg)
+            print(f"Available modules: {list(self.modules.keys())}")

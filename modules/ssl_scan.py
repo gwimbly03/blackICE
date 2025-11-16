@@ -3,7 +3,7 @@ import ssl
 import OpenSSL
 from datetime import datetime
 from typing import Dict, List, Any
-import json
+from core.logger import logger
 
 class SSLScanner:
     """
@@ -351,22 +351,6 @@ class SSLScanner:
         
         print(f"\n{'='*60}")
 
-    def export_results(self, filename: str = None):
-        """
-        Saves to json if needed
-        """
-        if not filename:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            target_clean = self.results['target'].replace(':', '_')
-            filename = f"ssl_scan_{target_clean}_{timestamp}.json"
-        
-        try:
-            with open(filename, 'w') as f:
-                json.dump(self.results, f, indent=2)
-            print(f"Results exported to: {filename}")
-        except Exception as e:
-            print(f"Error exporting results: {e}")
-
     def run(self):
         target = input("Enter target domain or IP (e.g., example.com:443): ").strip()
         
@@ -380,6 +364,9 @@ class SSLScanner:
         host, port_str = target.split(':', 1)
         port = int(port_str)
         
+        # Log module start
+        logger.log_module_start("ssl_scan", f"{host}:{port}")
+        
         print(f"\nStarting SSL/TLS scan for: {host}:{port}")
         print("=" * 50)
         
@@ -387,11 +374,42 @@ class SSLScanner:
             self.scan_ssl(host, port)
             self.display_results()
             
-            export = input("\nExport results to JSON? (y/n): ").lower()
-            if export in ('y', 'yes'):
-                self.export_results()
-                
+            # Prepare results for logging
+            result = {
+                "status": "completed",
+                "security_grade": self.results['security_grade'],
+                "security_score": self.results.get('security_score', 0),
+                "certificate_info": self.results['certificate_info'],
+                "supported_protocols": self.results['supported_protocols'],
+                "vulnerabilities_found": sum(
+                    1 for vuln in self.results['vulnerability_checks'].values() 
+                    if vuln.get('vulnerable')
+                ),
+                "vulnerability_details": self.results['vulnerability_checks'],
+                "cipher_suites": self.results['cipher_suites'],
+                "summary": {
+                    "grade": self.results['security_grade'],
+                    "score": self.results.get('security_score', 0),
+                    "vulnerabilities": sum(
+                        1 for vuln in self.results['vulnerability_checks'].values() 
+                        if vuln.get('vulnerable')
+                    ),
+                    "certificate_expired": self.results['certificate_info'].get('has_expired', False),
+                    "days_until_expiry": self.results['certificate_info'].get('expires_in_days', 0)
+                }
+            }
+            
+            # Log the results
+            logger.log_module_result("ssl_scan", f"{host}:{port}", result)
+            
+            print(f"\nSSL scan completed. Results have been logged.")
+            
         except Exception as e:
+            error_result = {
+                "status": "error",
+                "error": str(e)
+            }
+            logger.log_module_result("ssl_scan", f"{host}:{port}", error_result)
             print(f"Error during SSL scan: {e}")
 
 

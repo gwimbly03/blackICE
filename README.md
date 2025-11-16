@@ -1,18 +1,27 @@
 # BlackICE
 
+Advanced, modular pentesting engine written in Python, a collection of scanners and attack modules with a configurable logger and notification system so far.
 
 ---
 
 ## Table of Contents
 
-* [Prerequisites](#prerequisites)
-* [Installation](#installation)
-* [Usage](#usage)
+- [Features](#features-what-has-been-implemented-so-far)  
+- [Prerequisites](#prerequisites)  
+- [Installation](#installation)  
+- [Configuration](#configuration)  
+- [Usage](#usage)  
+  - [Run the program](#1-run-the-program) 
+- [Directory layout](#directory-layout) 
+- [What I delivered in Milestone 1](#what-i-delivered-in-milestone-1)  
 
-  * [1. Run the script](#1-run-the-script)
-  * [2. Choose a category](#2-choose-a-category)
-  * [3. Choose a module](#3-choose-a-module)
-  * [4. Provide input](#4-provide-input)
+---
+## Features (What has been implemented so far)
+
+* Modular engine that discovers and runs modules from the modules/ directory.
+* Custom logging system that can write logs in JSON or CSV, configurable via YAML.
+* Terminal and email notifications summarizing module runs and baseline diffs.
+
 ---
 
 ## Prerequisites
@@ -24,17 +33,65 @@
 
 ## Installation
 
-Install the required Python packages from `requirements.txt`:
+1. Clone the repository (if you haven't already):
 
 ```bash
+git clone https://github.com/towelie03/blackICE.git
+cd blackICE
 pip install -r requirements.txt
+
 ```
+Use a virtual environment to keep dependencies isolated.
+
+---
+
+## Configuration 
+
+Upon first run blackICE will create a logger.yaml, logs folder and baseline folder for configuration purposes.   
+
+```
+logging:
+  format: 'json' #can be json or csv
+  output_dir: 'logs'
+  console:
+    show_progress: true
+    show_log_messages: false
+    show_module_start: true
+    show_module_completion: true
+  file:
+    include_timestamp: true
+    filename_pattern: 'blackice_scan_{timestamp}'
+    max_file_size: 10
+    backup_count: 5
+  include:
+    module_results: true
+    error_details: true
+    scan_metadata: true
+    timing_info: true
+  email:
+    ## Im using mailtrap for testing
+    enabled: true  # can be true or false
+    smtp_server: 'example.smpt.com'
+    smtp_port: 2525
+    sender_email: 'example@blackICE.com'  
+    sender_username: 'username' 
+    sender_password: 'password'  
+    recipient_emails:
+      - 'test1@example.com' 
+      - 'recipient2@example.com'
+    notifications:
+      baseline_changes: true
+      critical_findings: true
+      scan_completion: true
+```
+
+You can specify the directory you want to save the logs if you have a different place you want them.
 
 ---
 
 ## Usage
 
-### 1. Run the script
+### 1. Run the program
 
 Start the program with:
 
@@ -42,42 +99,33 @@ Start the program with:
 python main.py
 ```
 
-### 2. Choose a category
+When the program starts, it will:
+1. Discover modules under modules/
+2. Prompt user to chose the catagorie they want to use 
+3. Run selected modules inside that catagorie 
+4. Save logs to the logs/ folder
 
-When prompted, type the number of the category you want to use (example categories below — update to match your app):
-
+---
+## Directory Layout 
 ```
-Available Categories:
-------------------------------
-1. Reconnaissance (3 modules)
-2. Vulnerability Assessment (2 modules)
-0. Exit BlackICE
-
-Enter category number: 1
-```
-
-### 3. Choose a module
-
-After selecting a category, pick a module by typing `1`, `2`, or `3`. Example:
-
-```
-Reconnaissance Modules:
-------------------------------
-1. port_scan            - Port Scanner to find open ports and services and grab their banners
-2. gateway_scan         - Scans the gateway to see all the hosts connected, returns the IP and MAC
-3. dns_enum             - DNS Enumeration finds the DNS records and subdomains
-0. Back to categories
-
-Enter module number: 3
+blackICE/
+├─ core/
+│  ├─ engine.py
+│  └─ logger.py
+├─ modules/
+│  └─ Pentesting modules
+├─ logs/
+├─ baseline/
+├─ logger.yml
+├─ requirements.txt
+└─ main.py
 ```
 
-### 4. Provide input
+---
 
-Depending on the module you selected, provide an IP address, gateway, or website when prompted:
+## What I delivered in Milestone 1
 
-```
-Enter domain to enumerate (e.g., example.com): bcit.ca
-```
-
-
+* Custom logger that outputs logs in JSON or CSV and takes configuration from a YAML file.
+* Notifiactions that notify the user by email and on the terminal about when a module is ran and when it finishes executing. The email will display the scan summary and the difference between the new and previous scan, allowing comparsion of the baseline.
+* Added new modules to the pentester, they are OWASP Top 10 scan, DDOS attack, DNS poisioning and ARP spoofing.
 

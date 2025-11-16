@@ -3,6 +3,7 @@ import dns.reversename
 import socket
 import subprocess
 from typing import Dict, List, Any
+from core.logger import logger
 
 class DNSEnumerator:
     """
@@ -215,20 +216,54 @@ class DNSEnumerator:
             print(f"Error exporting results: {e}")
 
     def run(self):
+        """
+        Main run method that handles user input and executes DNS enumeration
+        """
         domain = input("Enter domain to enumerate (e.x., example.com): ").strip()
         
         if not domain:
             print("No domain specified. Exiting.")
             return
             
+        logger.log_module_start("dns_enum", domain)
+        
         print(f"\nStarting DNS enumeration for: {domain}")
         print("=" * 50)
         
         try:
             self.enumerate_dns(domain)
             self.display_results()
+            
+            result = {
+                "status": "completed",
+                "subdomains_found": len(self.results['subdomains']),
+                "dns_servers_found": len(self.results['dns_servers']),
+                "zone_transfer_successful": any(
+                    isinstance(result, list) and result 
+                    for result in self.results['zone_transfer'].values()
+                ),
+                "record_types_found": list(self.results['basic_records'].keys()),
+                "summary": {
+                    "total_subdomains": len(self.results['subdomains']),
+                    "total_dns_servers": len(self.results['dns_servers']),
+                    "zone_transfer_vulnerable": any(
+                        isinstance(result, list) and result 
+                        for result in self.results['zone_transfer'].values()
+                    )
+                }
+            }
+            
+            # Log the results
+            logger.log_module_result("dns_enum", domain, result)
+            
+            print(f"\nDNS enumeration completed. Results have been logged.")
+            
         except Exception as e:
+            error_result = {
+                "status": "error",
+                "error": str(e)
+            }
+            logger.log_module_result("dns_enum", domain, error_result)
             print(f"Error during DNS enumeration: {e}")
-
 
 dns_enum = DNSEnumerator()

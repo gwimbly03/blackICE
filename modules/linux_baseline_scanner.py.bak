@@ -1,0 +1,346 @@
+import os
+import hashlib
+import datetime
+import platform
+import subprocess
+from time import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import lru_cache
+from pathlib import Path
+
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.progress import Progress, BarColumn, TimeRemainingColumn
+
+from core.logger import logger
+
+
+class LinuxBaselineScanner:
+    """
+    Optimized Linux system baseline scanner for security monitoring and change detection.
+    This version improves performance using parallel scanning, caching, faster JSON serialization,
+    and reduced redundant syscalls — while maintaining compatibility with the existing engine/logger.
+    """
+
+    description = "Comprehensive Linux system baseline scanner for security monitoring and change detection"
+
+    def __init__(self):
+        self.module_name = "linux_baseline"
+        self.console = Console()
+        self.output_dir = Path("baseline")
+        self.output_dir.mkdir(exist_ok=True)
+
+    # ==============================
+    # Core Scan Entry
+    # ==============================
+
+    def run(self):
+        scan_result = self._perform_baseline_scan()
+        logger.notify_baseline_scan_complete(scan_result)
+        return scan_result
+
+    # ==============================
+    # Baseline Scan Orchestrator
+    # ==============================
+
+    def _perform_baseline_scan(self):
+        scan_modules = [
+            self._scan_system_info,
+            self._scan_network_config,
+            self._scan_file_integrity,
+            self._scan_users_groups,
+            self._scan_processes_services,
+            self._scan_packages,
+            self._scan_cron_jobs,
+            self._scan_security_config,
+        ]
+
+        scan_id = f"linux_baseline_{self._get_timestamp()}"
+        baseline_data = {
+            "scan_id": scan_id,
+            "timestamp": datetime.datetime.utcfromtimestamp(time()).isoformat(),
+            "findings": [],
+        }
+
+        self.console.print(Panel("[bold cyan]Performing baseline scan...[/bold cyan]"))
+
+        # Parallel execution of modules
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            futures = {executor.submit(m): m.__name__ for m in scan_modules}
+
+            with Progress(
+                "[progress.description]{task.description}",
+                BarColumn(),
+                "{task.percentage:>3.0f}%",
+                TimeRemainingColumn(),
+                console=self.console,
+            ) as progress:
+                task = progress.add_task("[green]Scanning modules...", total=len(futures))
+
+                for future in as_completed(futures):
+                    result = future.result()
+                    if result:
+                        baseline_data["findings"].extend(result)
+                    progress.advance(task)
+
+        # Save baseline to disk
+        file_path = self.output_dir / f"{scan_id}.json"
+        self._save_json(file_path, baseline_data)
+
+        # Print summary
+        self._print_findings_table(baseline_data["findings"])
+
+        return baseline_data
+
+    # ==============================
+    # Individual Scan Modules (Cached & Optimized)
+    # ==============================
+
+    @lru_cache(maxsize=1)
+    def _cached_system_info(self):
+        return {
+            "hostname": platform.node(),
+            "kernel": platform.release(),
+            "architecture": platform.machine(),
+            "boot_time": self._cached_boot_time(),
+            "load_average": self._cached_load_avg(),
+            "distro": self._cached_linux_distro(),
+        }
+
+    def _scan_system_info(self):
+        info = self._cached_system_info()
+        uptime = datetime.datetime.now() - datetime.datetime.fromtimestamp(info["boot_time"])
+
+        return [{
+            "module": "system_info",
+            "hostname": info["hostname"],
+            "kernel": info["kernel"],
+            "arch": info["architecture"],
+            "uptime": str(uptime),
+            "load_avg": info["load_average"],
+            "distro": info["distro"],
+            "status": "PASS",
+        }]
+
+    def _scan_network_config(self):
+        try:
+            interfaces = self._cached_net_if_addrs()
+            return [{
+                "module": "network_config", 
+                "interface_count": len(interfaces),
+                "status": "PASS"
+            }]
+        except Exception as e:
+            return [{"module": "network_config", "status": "CRITICAL", "error": str(e)}]
+
+    def _scan_file_integrity(self):
+        important_paths = [
+            "/etc/passwd", "/etc/shadow", "/etc/group", "/etc/sudoers",
+            "/etc/ssh/sshd_config", "/etc/hosts", "/etc/hostname",
+            "/bin/bash", "/bin/sh", "/usr/bin/sudo"
+        ]
+        results = []
+
+        for path in important_paths:
+            if not self._cached_path_exists(path):
+                results.append({
+                    "module": "file_integrity", 
+                    "check": path, 
+                    "status": "CRITICAL", 
+                    "message": "Missing file"
+                })
+                continue
+            try:
+                file_hash = self._cached_file_hash(path)
+                results.append({
+                    "module": "file_integrity", 
+                    "check": path, 
+                    "hash": file_hash, 
+                    "status": "PASS"
+                })
+            except PermissionError:
+                results.append({
+                    "module": "file_integrity", 
+                    "check": path, 
+                    "status": "WARNING", 
+                    "message": "Permission denied"
+                })
+            except Exception as e:
+                results.append({
+                    "module": "file_integrity", 
+                    "check": path, 
+                    "status": "WARNING", 
+                    "message": str(e)
+                })
+
+        return results
+
+    def _scan_users_groups(self):
+        try:
+            users = self._cached_getpwall()
+            groups = self._cached_getgrall()
+            return [{
+                "module": "users_groups", 
+                "users_count": len(users), 
+                "groups_count": len(groups), 
+                "status": "PASS"
+            }]
+        except Exception as e:
+            return [{"module": "users_groups", "status": "CRITICAL", "error": str(e)}]
+
+    def _scan_processes_services(self):
+        processes = self._cached_process_iter()
+        return [{
+            "module": "processes_services",
+            "process_count": len(processes),
+            "status": "PASS",
+        }]
+
+    def _scan_packages(self):
+        try:
+            for cmd in ["dpkg -l | wc -l", "rpm -qa | wc -l"]:
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                if result.returncode == 0:
+                    return [{
+                        "module": "packages",
+                        "package_count": int(result.stdout.strip()),
+                        "status": "PASS"
+                    }]
+            return [{"module": "packages", "status": "WARNING", "message": "No package manager detected"}]
+        except Exception as e:
+            return [{"module": "packages", "status": "WARNING", "message": str(e)}]
+
+    def _scan_cron_jobs(self):
+        try:
+            cron_count = 0
+            if self._cached_path_exists("/etc/crontab"):
+                with open("/etc/crontab", 'r') as f:
+                    cron_count = len([l for l in f if l.strip() and not l.startswith('#')])
+            return [{
+                "module": "cron_jobs",
+                "cron_entries": cron_count,
+                "status": "PASS"
+            }]
+        except Exception as e:
+            return [{"module": "cron_jobs", "status": "WARNING", "message": str(e)}]
+
+    def _scan_security_config(self):
+        try:
+            security_tools = {}
+            for tool in ["apparmor", "selinux", "ufw"]:
+                result = subprocess.run(f"which {tool}", shell=True, capture_output=True)
+                security_tools[tool] = result.returncode == 0
+            return [{
+                "module": "security_config",
+                "tools": security_tools,
+                "status": "PASS"
+            }]
+        except Exception as e:
+            return [{"module": "security_config", "status": "WARNING", "message": str(e)}]
+
+    # ==============================
+    # Cached System Calls
+    # ==============================
+
+    @lru_cache(maxsize=1)
+    def _cached_boot_time(self):
+        import psutil
+        return psutil.boot_time()
+
+    @lru_cache(maxsize=1)
+    def _cached_load_avg(self):
+        return os.getloadavg()
+
+    @lru_cache(maxsize=1)
+    def _cached_linux_distro(self):
+        try:
+            with open('/etc/os-release', 'r') as f:
+                distro_info = {}
+                for line in f:
+                    if '=' in line:
+                        key, value = line.strip().split('=', 1)
+                        distro_info[key] = value.strip('"')
+                return distro_info.get('PRETTY_NAME', 'Unknown')
+        except:
+            return "Unknown"
+
+    @lru_cache(maxsize=1)
+    def _cached_net_if_addrs(self):
+        import psutil
+        return psutil.net_if_addrs()
+
+    @lru_cache(maxsize=1)
+    def _cached_process_iter(self):
+        import psutil
+        return list(psutil.process_iter(['pid', 'name', 'username']))
+
+    @lru_cache(maxsize=32)
+    def _cached_path_exists(self, path):
+        return os.path.exists(path)
+
+    @lru_cache(maxsize=32)
+    def _cached_file_hash(self, filepath):
+        hasher = hashlib.sha256()
+        with open(filepath, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
+    @lru_cache(maxsize=1)
+    def _cached_getpwall(self):
+        import pwd
+        return pwd.getpwall()
+
+    @lru_cache(maxsize=1)
+    def _cached_getgrall(self):
+        import grp
+        return grp.getgrall()
+
+    # ==============================
+    # Utility Functions
+    # ==============================
+
+    def _get_timestamp(self):
+        return datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    def _save_json(self, path, data):
+        try:
+            import orjson
+            with open(path, "wb") as f:
+                f.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
+        except ImportError:
+            import json
+            with open(path, "w") as f:
+                json.dump(data, f, indent=2)
+
+    def _print_findings_table(self, findings):
+        table = Table(title="Baseline Scan Results", show_lines=True)
+        table.add_column("Module", style="cyan", no_wrap=True)
+        table.add_column("Status", style="bold")
+        table.add_column("Details", style="white")
+
+        for f in findings:
+            status = f.get("status", "UNKNOWN")
+            color = {"PASS": "green", "WARNING": "yellow", "CRITICAL": "red"}.get(status, "white")
+            
+            # Create meaningful summary
+            details_parts = []
+            if f.get("message"):
+                details_parts.append(f["message"])
+            if f.get("check"):
+                details_parts.append(f"check: {f['check']}")
+            if f.get("process_count") is not None:
+                details_parts.append(f"{f['process_count']} processes")
+            if f.get("package_count") is not None:
+                details_parts.append(f"{f['package_count']} packages")
+            if f.get("users_count") is not None:
+                details_parts.append(f"{f['users_count']} users")
+            if f.get("interface_count") is not None:
+                details_parts.append(f"{f['interface_count']} interfaces")
+                
+            summary = " | ".join(details_parts) if details_parts else "Completed"
+            
+            table.add_row(f["module"], f"[{color}]{status}[/{color}]", summary)
+
+        self.console.print(Panel(table, title="[bold blue]Scan Summary[/bold blue]"))

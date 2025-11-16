@@ -1,0 +1,33 @@
+logging:
+  format: 'json' #can be json or csv
+  output_dir: 'logs'
+  console:
+    show_progress: true
+    show_log_messages: false
+    show_module_start: true
+    show_module_completion: true
+  file:
+    include_timestamp: true
+    filename_pattern: 'blackice_scan_{timestamp}'
+    max_file_size: 10
+    backup_count: 5
+  include:
+    module_results: true
+    error_details: true
+    scan_metadata: true
+    timing_info: true
+  email:
+    ## Im using mailtrap for testing 
+    enabled: true  # can be true or false
+    smtp_server: 'sandbox.smtp.mailtrap.io'
+    smtp_port: 2525
+    sender_email: 'security@blackICE.com'  # sender gmail address
+    sender_username: 'da294f52f2fa19' # username
+    sender_password: '1fb4bacababd86'  # gmail app password 
+    recipient_emails:
+      - 'test1@example.com'  # alert reciver 
+      - 'recipient2@example.com'
+    notifications:
+      baseline_changes: true
+      critical_findings: true
+      scan_completion: true
