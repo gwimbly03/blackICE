@@ -19,7 +19,7 @@ DEFAULT_TIMEOUT = 10.0
 
 
 class NvdCveReporter:
-    description = "Live NVD CVE Reporter (NVD API v2.0) — search CVEs live and show publish dates & CVSS"
+    description = "Live NVD CVE Reporter (NVD API v2.0) — master search function supporting all parameters"
 
     def __init__(self, page_size: int = DEFAULT_PAGE_SIZE, timeout: float = DEFAULT_TIMEOUT):
         self.console = Console()
@@ -93,6 +93,27 @@ class NvdCveReporter:
             url = r.get("url") or r.get("href")
             if url:
                 refs.append(url)
+        is_kev = False
+        if isinstance(cve_obj.get("cveTag"), list):
+            for t in cve_obj.get("cveTag", []):
+                try:
+                    if isinstance(t, str) and t.lower() == "kev":
+                        is_kev = True
+                        break
+                except:
+                    pass
+        if not is_kev:
+            if isinstance(cve_obj.get("cveTags"), list):
+                for t in cve_obj.get("cveTags", []):
+                    try:
+                        if isinstance(t, str) and t.lower() == "kev":
+                            is_kev = True
+                            break
+                    except:
+                        pass
+        if not is_kev:
+            if item.get("hasKev") is True or cve_obj.get("hasKev") is True:
+                is_kev = True
         return {
             "id": cve_id,
             "published": str(published),
@@ -100,7 +121,8 @@ class NvdCveReporter:
             "summary": summary.strip(),
             "cvss_score": cvss_score,
             "severity": severity.upper() if severity else "N/A",
-            "references": refs
+            "references": refs,
+            "is_kev": is_kev
         }
 
     @staticmethod
@@ -130,8 +152,6 @@ class NvdCveReporter:
             return "[yellow]MEDIUM[/yellow]"
         if s == "LOW":
             return "[green]LOW[/green]"
-        if s.startswith("CVSSV2"):
-            return f"[magenta]{sev}[/magenta]"
         return "[grey50]UNKNOWN[/grey50]"
 
     @staticmethod
@@ -160,113 +180,6 @@ class NvdCveReporter:
                 pass
         return "N/A (not provided)"
 
-    def fetch_cves_keyword(self, keyword: str, max_results: int = DEFAULT_MAX_RESULTS) -> List[Dict[str, Any]]:
-        """
-        Query NVD using keywordSearch and return parsed CVE rows.
-        """
-        results: List[Dict[str, Any]] = []
-        params = {"keywordSearch": keyword}
-        with Progress() as progress:
-            task = progress.add_task(f"[cyan]Querying NVD for '{keyword}'...", start=False)
-            start_index = 0
-            fetched = 0
-            while True:
-                progress.update(task, description=f"[cyan]Fetching startIndex={start_index}...")
-                data = self._request(params, start_index=start_index)
-                if data is None:
-                    break
-                vulnerabilities = data.get("vulnerabilities", []) or []
-                total_results = data.get("totalResults", 0) or data.get("total", 0) or 0
-                if not vulnerabilities:
-                    break
-                for v in vulnerabilities:
-                    parsed = self._parse_cve_item(v)
-                    results.append(parsed)
-                    fetched += 1
-                    if fetched >= max_results:
-                        break
-                if fetched >= max_results or (start_index + len(vulnerabilities)) >= total_results:
-                    break
-                start_index += len(vulnerabilities)
-                time.sleep(self.paged_sleep)
-            progress.update(task, completed=True)
-        return results
-
-    def fetch_cve_by_id(self, cve_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Retrieve a single CVE record by ID.
-        """
-        params = {"cveId": cve_id}
-        data = self._request(params, start_index=0)
-        if not data:
-            return None
-        vulnerabilities = data.get("vulnerabilities") or []
-        if not vulnerabilities:
-            return None
-        parsed = self._parse_cve_item(vulnerabilities[0])
-        return parsed
-
-    def fetch_newest_cves(self, limit: int = 20) -> List[Dict[str, Any]]:
-        """
-        Fetch newest CVEs without using date filters (avoids 404 when system clock is wrong).
-        We simply sort by lastModified descending and take the first N.
-        """
-        results = []
-        params = {
-            "sortBy": "lastModified",
-            "sortOrder": "desc"
-        }
-
-        start_index = 0
-        fetched = 0
-
-        with Progress() as progress:
-            task = progress.add_task("[cyan]Fetching newest CVEs...", start=False)
-
-            while fetched < limit:
-                data = self._request(params, start_index=start_index)
-                if not data:
-                    break
-
-                vulns = data.get("vulnerabilities", [])
-                if not vulns:
-                    break
-
-                for v in vulns:
-                    parsed = self._parse_cve_item(v)
-                    results.append(parsed)
-                    fetched += 1
-                    if fetched >= limit:
-                        break
-
-                start_index += len(vulns)
-                time.sleep(self.paged_sleep)
-
-            progress.update(task, completed=True)
-
-        return results
-
-    def show_newest_cves(self, limit: int = 20):
-        cves = self.fetch_newest_cves(limit)
-        if not cves:
-            self.console.print("[red]No CVEs found.[/red]")
-            return
-        table = Table(title=f"Top {limit} Newest CVEs", show_lines=True)
-        table.add_column("CVE ID", style="cyan", overflow="fold")
-        table.add_column("Published", style="green")
-        table.add_column("Severity", style="magenta")
-        table.add_column("Score", style="yellow")
-        table.add_column("Description", overflow="fold")
-        for c in cves:
-            table.add_row(
-                c["id"],
-                c["published"][:19],
-                self.severity_color_label(c["severity"]),
-                str(c["cvss_score"]) if c["cvss_score"] else "N/A",
-                textwrap.shorten(c["summary"], width=140)
-            )
-        self.console.print(table)
-
     def _render_table(self, rows: List[Dict[str, Any]], page: int = 1, page_size: Optional[int] = None):
         page_size = page_size or self.page_size
         total = len(rows)
@@ -290,6 +203,8 @@ class NvdCveReporter:
             score_str = f"{score:.1f}" if isinstance(score, float) else (str(score) if score is not None else "N/A")
             sev = r.get("severity") or self.score_to_severity(score)
             sev_label = self.severity_color_label(sev)
+            if r.get("is_kev"):
+                sev_label = sev_label + "  KEV"
             summary = (r.get("summary") or "").replace("\n", " ").strip()
             if len(summary) > 240:
                 summary = summary[:236].rstrip() + "..."
@@ -361,7 +276,7 @@ class NvdCveReporter:
                 f.write(f"- **Published:** {r.get('published')}\n")
                 f.write(f"- **Last Modified:** {r.get('lastModified')}\n")
                 f.write(f"- **CVSS:** {r.get('cvss_score')}\n")
-                f.write(f"- **Severity:** {r.get('severity')}\n\n")
+                f.write(f"- **Severity:** {r.get('severity')}" + (f"  KEV" if r.get("is_kev") else "") + "\n\n")
                 f.write("**Summary:**\n\n")
                 f.write(textwrap.fill(r.get("summary") or "", width=100))
                 f.write("\n\n---\n\n")
@@ -369,13 +284,14 @@ class NvdCveReporter:
     def _write_html(self, rows: List[Dict[str, Any]], path: str):
         html_rows = []
         for r in rows:
+            kev_text = " KEV" if r.get("is_kev") else ""
             html_rows.append(f"""
             <tr>
               <td>{r.get('id')}</td>
               <td>{r.get('published')}</td>
               <td>{r.get('lastModified')}</td>
               <td>{r.get('cvss_score') or 'N/A'}</td>
-              <td>{r.get('severity')}</td>
+              <td>{r.get('severity')}{kev_text}</td>
               <td>{(r.get('summary') or '')[:400]}</td>
             </tr>
             """)
@@ -393,60 +309,279 @@ class NvdCveReporter:
         with open(path, "w", encoding="utf-8") as f:
             f.write(html)
 
+    def search_cves(
+        self,
+        keywordSearch: Optional[str] = None,
+        keywordExactMatch: bool = False,
+        cpeName: Optional[str] = None,
+        virtualMatchString: Optional[str] = None,
+        versionStart: Optional[str] = None,
+        versionStartType: Optional[str] = None,
+        versionEnd: Optional[str] = None,
+        versionEndType: Optional[str] = None,
+        cveId: Optional[str] = None,
+        cveTag: Optional[str] = None,
+        cvssV2Metrics: Optional[str] = None,
+        cvssV2Severity: Optional[str] = None,
+        cvssV3Metrics: Optional[str] = None,
+        cvssV3Severity: Optional[str] = None,
+        cvssV4Metrics: Optional[str] = None,
+        cvssV4Severity: Optional[str] = None,
+        cweId: Optional[str] = None,
+        hasCertAlerts: bool = False,
+        hasCertNotes: bool = False,
+        hasKev: bool = False,
+        hasOval: bool = False,
+        isVulnerable: bool = False,
+        kevStartDate: Optional[str] = None,
+        kevEndDate: Optional[str] = None,
+        lastModStartDate: Optional[str] = None,
+        lastModEndDate: Optional[str] = None,
+        pubStartDate: Optional[str] = None,
+        pubEndDate: Optional[str] = None,
+        noRejected: bool = False,
+        sourceIdentifier: Optional[str] = None,
+        resultsPerPage: Optional[int] = None,
+        sortBy: Optional[str] = None,
+        sortOrder: Optional[str] = None,
+        startIndex: int = 0,
+        max_results: int = DEFAULT_MAX_RESULTS
+    ) -> List[Dict[str, Any]]:
+        """
+        Master search function for NVD CVE API v2.0. Accepts all supported parameters.
+        Returns a list of normalized CVE records (parsed).
+        """
+        params: Dict[str, Any] = {}
+        if keywordSearch:
+            params["keywordSearch"] = keywordSearch
+        if keywordExactMatch:
+            params["keywordExactMatch"] = ""
+        if cpeName:
+            params["cpeName"] = cpeName
+        if virtualMatchString:
+            params["virtualMatchString"] = virtualMatchString
+        if versionStart:
+            params["versionStart"] = versionStart
+        if versionStartType:
+            params["versionStartType"] = versionStartType
+        if versionEnd:
+            params["versionEnd"] = versionEnd
+        if versionEndType:
+            params["versionEndType"] = versionEndType
+        if cveId:
+            params["cveId"] = cveId
+        if cveTag:
+            params["cveTag"] = cveTag
+        if cvssV2Metrics:
+            params["cvssV2Metrics"] = cvssV2Metrics
+        if cvssV2Severity:
+            params["cvssV2Severity"] = cvssV2Severity
+        if cvssV3Metrics:
+            params["cvssV3Metrics"] = cvssV3Metrics
+        if cvssV3Severity:
+            params["cvssV3Severity"] = cvssV3Severity
+        if cvssV4Metrics:
+            params["cvssV4Metrics"] = cvssV4Metrics
+        if cvssV4Severity:
+            params["cvssV4Severity"] = cvssV4Severity
+        if cweId:
+            params["cweId"] = cweId
+        if hasCertAlerts:
+            params["hasCertAlerts"] = ""
+        if hasCertNotes:
+            params["hasCertNotes"] = ""
+        if hasKev:
+            params["hasKev"] = ""
+        if hasOval:
+            params["hasOval"] = ""
+        if isVulnerable:
+            params["isVulnerable"] = ""
+        if kevStartDate:
+            params["kevStartDate"] = kevStartDate
+        if kevEndDate:
+            params["kevEndDate"] = kevEndDate
+        if lastModStartDate:
+            params["lastModStartDate"] = lastModStartDate
+        if lastModEndDate:
+            params["lastModEndDate"] = lastModEndDate
+        if pubStartDate:
+            params["pubStartDate"] = pubStartDate
+        if pubEndDate:
+            params["pubEndDate"] = pubEndDate
+        if noRejected:
+            params["noRejected"] = ""
+        if sourceIdentifier:
+            params["sourceIdentifier"] = sourceIdentifier
+        if resultsPerPage:
+            params["resultsPerPage"] = resultsPerPage
+        if sortBy:
+            params["sortBy"] = sortBy
+        if sortOrder:
+            params["sortOrder"] = sortOrder
+
+        if isVulnerable and not cpeName:
+            raise ValueError("isVulnerable requires cpeName to be provided")
+
+        if (cvssV2Metrics and (cvssV3Metrics or cvssV4Metrics)) or (cvssV3Metrics and cvssV4Metrics):
+            raise ValueError("cvss metric filters are mutually exclusive")
+
+        if (cvssV2Severity and (cvssV3Severity or cvssV4Severity)) or (cvssV3Severity and cvssV4Severity):
+            raise ValueError("cvss severity filters are mutually exclusive")
+
+        if (lastModStartDate and not lastModEndDate) or (lastModEndDate and not lastModStartDate):
+            raise ValueError("Both lastModStartDate and lastModEndDate must be provided together")
+
+        if (pubStartDate and not pubEndDate) or (pubEndDate and not pubStartDate):
+            raise ValueError("Both pubStartDate and pubEndDate must be provided together")
+
+        if kevStartDate and not kevEndDate or kevEndDate and not kevStartDate:
+            raise ValueError("Both kevStartDate and kevEndDate must be provided together")
+
+        date_params = []
+        if lastModStartDate and lastModEndDate:
+            date_params.append(("lastMod", lastModStartDate, lastModEndDate))
+        if pubStartDate and pubEndDate:
+            date_params.append(("pub", pubStartDate, pubEndDate))
+        if kevStartDate and kevEndDate:
+            date_params.append(("kev", kevStartDate, kevEndDate))
+        for kind, s, e in date_params:
+            try:
+                s_dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+                e_dt = datetime.fromisoformat(e.replace("Z", "+00:00"))
+            except Exception:
+                raise ValueError(f"Invalid ISO-8601 date format for {kind}StartDate/EndDate")
+            if s_dt > e_dt:
+                raise ValueError(f"{kind}StartDate must be <= {kind}EndDate")
+            if (e_dt - s_dt).days > 120:
+                raise ValueError(f"{kind} date range cannot exceed 120 days")
+
+        results: List[Dict[str, Any]] = []
+        fetched = 0
+        si = startIndex
+        cap = max_results
+        with Progress() as progress:
+            task = progress.add_task("[cyan]Querying NVD...", start=False)
+            while fetched < cap:
+                data = self._request(params, start_index=si)
+                if data is None:
+                    break
+                vulns = data.get("vulnerabilities", []) or []
+                total_results = data.get("totalResults", 0) or data.get("total", 0) or 0
+                if not vulns:
+                    break
+                for v in vulns:
+                    parsed = self._parse_cve_item(v)
+                    results.append(parsed)
+                    fetched += 1
+                    if fetched >= cap:
+                        break
+                si += len(vulns)
+                if fetched >= cap or si >= total_results:
+                    break
+                time.sleep(self.paged_sleep)
+            progress.update(task, completed=True)
+        return results
+
+    
     def run(self):
-        self.console.print("[bold green]BlackICE - NVD CVE Live Reporter[/bold green]")
+        self.console.print("[bold green]BlackICE - NVD CVE Live Reporter (Master Search)[/bold green]")
         if self.api_key:
             self.console.print(f"[dim]Using NVD API key from environment.[/dim]")
+
         while True:
             self.console.print("\n[bold]Options[/bold]")
             self.console.print("1) Lookup CVE by ID (e.g. CVE-2023-1234)")
             self.console.print("2) Search by keyword (e.g. openssl, apache, rce)")
-            self.console.print("3) Show Top Newest CVE's")
+            self.console.print("4) Advanced search (open parameter form)")
             self.console.print("0) Exit")
-            choice = Prompt.ask("Choose", choices=["0", "1", "2", "3"], default="0")
+
+            choice = Prompt.ask("Choose", choices=["0", "1", "2", "4"], default="0")
+
             if choice == "0":
                 self.console.print("Exiting NVD CVE Reporter.")
                 return
+
             if choice == "1":
                 cve_id = Prompt.ask("Enter CVE ID").strip().upper()
                 if not cve_id:
                     continue
-                self.console.print(f"[blue]Fetching {cve_id}...[/blue]")
-                parsed = self.fetch_cve_by_id(cve_id)
+                parsed = self.search_cves(cveId=cve_id, max_results=1)
                 if not parsed:
                     self.console.print(f"[yellow]No results for {cve_id}[/yellow]")
                     continue
-                self._interactive_paged_display([parsed])
+                self._interactive_paged_display(parsed)
+
             elif choice == "2":
                 keyword = Prompt.ask("Enter search keyword").strip()
                 if not keyword:
                     continue
-                limit = Prompt.ask(f"Max results (default {DEFAULT_MAX_RESULTS})", default=str(DEFAULT_MAX_RESULTS))
+                limit = Prompt.ask(f"Max results (default {DEFAULT_MAX_RESULTS})",
+                                   default=str(DEFAULT_MAX_RESULTS))
                 try:
                     limit_i = int(limit)
                 except Exception:
                     limit_i = DEFAULT_MAX_RESULTS
-                limit_i = min(limit_i, 2000)
-                self.console.print(f"[blue]Searching NVD for '{keyword}' (up to {limit_i} results)...[/blue]")
-                rows = self.fetch_cves_keyword(keyword, max_results=limit_i)
+
+                rows = self.search_cves(keywordSearch=keyword,
+                                        max_results=min(limit_i, 2000))
                 if not rows:
                     self.console.print("[yellow]No results returned or network error.[/yellow]")
                     continue
+
                 if Confirm.ask("Filter results by severity?"):
                     choices = ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
                     for idx, val in enumerate(choices, start=1):
                         self.console.print(f"{idx}) {val}")
-                    pick = Prompt.ask("Choose severity index", choices=[str(i) for i in range(1, len(choices) + 1)], default="1")
+
+                    pick = Prompt.ask("Choose severity index",
+                                      choices=[str(i) for i in range(1, len(choices) + 1)],
+                                      default="1")
                     sev = choices[int(pick) - 1]
-                    rows = [r for r in rows if (r.get("severity") == sev or (r.get("cvss_score") is not None and self.score_to_severity(r.get("cvss_score")) == sev))]
+
+                    rows = [
+                        r for r in rows
+                        if (r.get("severity") == sev or
+                            (r.get("cvss_score") is not None
+                             and self.score_to_severity(r.get("cvss_score")) == sev))
+                    ]
+
                 self._interactive_paged_display(rows)
-            #elif choice == "3":
-            #    limit = Prompt.ask("How many newest CVEs?", default="20")
-            #    try:
-            #        li = int(limit)
-            #    except:
-            #        li = 20
-            #    self.show_newest_cves(li)
+
+            elif choice == "4":
+                params = {}
+                self.console.print("[bold]Enter advanced parameters. Leave blank to skip.[/bold]")
+
+                params["keywordSearch"] = Prompt.ask("keywordSearch", default="").strip() or None
+                params["cpeName"] = Prompt.ask("cpeName", default="").strip() or None
+                params["cveId"] = Prompt.ask("cveId", default="").strip() or None
+                params["cvssV3Severity"] = (
+                    Prompt.ask("cvssV3Severity (LOW/MEDIUM/HIGH/CRITICAL)", default="")
+                    .strip() or None
+                )
+                params["hasKev"] = Confirm.ask("hasKev?", default=False)
+                params["noRejected"] = Confirm.ask("noRejected?", default=False)
+
+                try:
+                    limit = int(Prompt.ask("Max results",
+                                           default=str(DEFAULT_MAX_RESULTS)))
+                except:
+                    limit = DEFAULT_MAX_RESULTS
+
+                rows = self.search_cves(
+                    keywordSearch=params.get("keywordSearch"),
+                    cpeName=params.get("cpeName"),
+                    cveId=params.get("cveId"),
+                    cvssV3Severity=params.get("cvssV3Severity"),
+                    hasKev=params.get("hasKev", False),
+                    noRejected=params.get("noRejected", False),
+                    max_results=min(limit, 2000)
+                )
+
+                if not rows:
+                    self.console.print("[yellow]No results returned or network error.[/yellow]")
+                    continue
+
+                self._interactive_paged_display(rows)
 
 
 reporter = NvdCveReporter()
