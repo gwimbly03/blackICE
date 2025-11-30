@@ -11,9 +11,10 @@ Advanced, modular pentesting engine written in Python, a collection of scanners 
 - [Installation](#installation)  
 - [Configuration](#configuration)  
 - [Usage](#usage)  
-  - [Run the program](#1-run-the-program) 
-- [Directory layout](#directory-layout) 
-- [What I delivered in Milestone 1](#what-i-delivered-in-milestone-1)  
+  - [Run the program](#1-run-the-program)
+- [CVE Database Integration](#cve-db-integration) 
+- [Directory layout](#directory-layout)
+- [What I delivered in Milestone 2](#what-i-delivered-in-milestone-1)  
 
 ---
 ## Features (What has been implemented so far)
@@ -104,6 +105,9 @@ When the program starts, it will:
 2. Prompt user to chose the catagorie they want to use 
 3. Run selected modules inside that catagorie 
 4. Save logs to the logs/ folder
+
+---
+## cve-db-integration
 
 ---
 ## Directory Layout 
