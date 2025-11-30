@@ -22,6 +22,8 @@ Advanced, modular pentesting engine written in Python, a collection of scanners 
 * Modular engine that discovers and runs modules from the modules/ directory.
 * Custom logging system that can write logs in JSON or CSV, configurable via YAML.
 * Terminal and email notifications summarizing module runs and baseline diffs.
+* Fully functional port scanner that works similar to Nmap and other popular port scanning tools.
+* NVE CVE TUI.
 
 ---
 
