@@ -12,9 +12,9 @@ Advanced, modular pentesting engine written in Python, a collection of scanners 
 - [Configuration](#configuration)  
 - [Usage](#usage)  
   - [Run the program](#1-run-the-program)
-- [CVE Database Integration](#cve-db-integration) 
+- [CVE Database Integration](#cve-database-integration) 
 - [Directory layout](#directory-layout)
-- [What I delivered in Milestone 2](#what-i-delivered-in-milestone-1)  
+- [What I delivered in Milestone 2](#what-i-delivered-in-milestone-2)  
 
 ---
 ## Features (What has been implemented so far)
@@ -107,7 +107,23 @@ When the program starts, it will:
 4. Save logs to the logs/ folder
 
 ---
-## cve-db-integration
+## CVE Database Integration
+
+```
+==================================================
+Running: cve_search
+==================================================
+Running module: cve_search
+Starting module: cve_search on pending_user_input
+BlackICE - NVD CVE Live Reporter (Master Search)
+
+Options
+1) Lookup CVE by ID (e.g. CVE-2023-1234)
+2) Search by keyword (e.g. openssl, apache, rce)
+4) Advanced search (open parameter form)
+0) Exit
+Choose [0/1/2/4] (0):
+```
 
 ---
 ## Directory Layout 
@@ -127,9 +143,9 @@ blackICE/
 
 ---
 
-## What I delivered in Milestone 1
+## What I delivered in Milestone 2
 
-* Custom logger that outputs logs in JSON or CSV and takes configuration from a YAML file.
-* Notifiactions that notify the user by email and on the terminal about when a module is ran and when it finishes executing. The email will display the scan summary and the difference between the new and previous scan, allowing comparsion of the baseline.
-* Added new modules to the pentester, they are OWASP Top 10 scan, DDOS attack, DNS poisioning and ARP spoofing.
+* I remade the basic port scanner from the prototype into a multi technique scanner by adding SYN, Xmas, FIN, and NULL stealth scans (via Scapy). Certian scanning techniques need ROOT privilages. Implemented global rate limiting with PPS control and Nmap-style T0–T5 templates, added intelligent banner grabbing with custom handlers for SSH, HTTP, FTP, SMTP, RDP, etc., integrated automatic CVE lookup with result caching, and rebuilt the threading system using a proper queue-based worker pool with thread-safe printing and graceful shutdown. The result is a fast, stealthy, and reconnaissance-rich scanner that now rivals professional tools while remaining fully customizable.
+* Created a complete NVD CVE Live Reporter that uses the official NVD API v2.0 with full parameter support, automatic pagination, rich interactive tables, severity/KEV filtering, and export to JSON/Markdown/HTML. It works as long as you have network access on the host.
+* Started the FASTAPI implementation for the backend.
 
