@@ -1,4 +1,3 @@
-# modules/recon/port_scanner.py
 import socket
 import time
 from datetime import datetime
@@ -9,16 +8,15 @@ from core.logger import logger
 from scapy.all import IP, TCP, sr1, send, conf
 from core.cve_db import CVELookup
 
-conf.verb = 0  # quiet scapy
+conf.verb = 0  
 
-# Tunables / defaults
+# These settings can be tuned to what the user wants I just set them to these values for testing 
 DEFAULT_THREAD_COUNT = 100
-SOCKET_TIMEOUT = 1.0           # connect socket timeout (seconds)
-BANNER_TIMEOUT = 2.0           # recv timeout inside banner grabbers
-SCAPY_PACKET_TIMEOUT = 0.6     # sr1 timeout (seconds)
-DEFAULT_PPS = 50               # packets per second global default
+SOCKET_TIMEOUT = 1.0           
+BANNER_TIMEOUT = 2.0           
+SCAPY_PACKET_TIMEOUT = 0.6    
+DEFAULT_PPS = 50               
 
-# Simple in-memory cache for CVE lookups per run
 CVE_CACHE = {}
 
 
@@ -39,7 +37,6 @@ class RateLimiter:
         self.delay = 1.0 / float(self.pps)
 
     def wait(self):
-        # wait until it's ok to send next packet
         with self._lock:
             now = time.time()
             diff = now - self._last
@@ -64,8 +61,8 @@ class PortScanner:
 
     def __init__(self):
         self.open_ports: List[Tuple[Any, ...]] = []
-        self._results_lock = Lock()      # protects open_ports
-        self._print_lock = Lock()        # protects prints
+        self._results_lock = Lock()      
+        self._print_lock = Lock()        
         self.job_queue = Queue()
         self.rate_limiter = RateLimiter(DEFAULT_PPS)
 
@@ -77,9 +74,6 @@ class PortScanner:
             8080: "http-proxy"
         }
 
-    # -------------------------
-    # Utilities
-    # -------------------------
     def safe_print(self, *args, **kwargs):
         with self._print_lock:
             print(*args, **kwargs)
@@ -198,7 +192,6 @@ class PortScanner:
 
     def syn_scan_port(self, target: str, port: int):
         try:
-            # Wait for rate limiter before sending
             self.rate_limiter.wait()
             pkt = IP(dst=target) / TCP(dport=port, flags="S")
             resp = sr1(pkt, timeout=SCAPY_PACKET_TIMEOUT, verbose=0)
@@ -209,8 +202,7 @@ class PortScanner:
 
             if resp.haslayer(TCP):
                 flags = resp[TCP].flags
-                if flags & 0x12 == 0x12:  # SYN/ACK
-                    # politely close
+                if flags & 0x12 == 0x12:  
                     rst = IP(dst=target) / TCP(dport=port, flags="R")
                     # respect rate limiter for RST too
                     self.rate_limiter.wait()
@@ -294,10 +286,8 @@ class PortScanner:
             service = self.common_ports.get(port, "unknown")
 
             if result == 0:
-                # Grab banner with short timeouts
                 banner = self.grab_banner(target, port, service)
 
-                # CVE lookup with per-run cache
                 cves = []
                 cache_key = (service, banner)
                 if cache_key in CVE_CACHE:
@@ -311,7 +301,6 @@ class PortScanner:
                 with self._results_lock:
                     self.open_ports.append((port, service, banner, cves))
 
-                # Output
                 self.safe_print(f"\n[OPEN] {port}/tcp ({service}) - {banner}")
                 if cves:
                     self.safe_print("  └── CVEs Found:")
@@ -339,7 +328,7 @@ class PortScanner:
     def timing_to_pps(timing: str) -> int:
         """
         Maps Nmap timing template to a rough packets-per-second value.
-        Adjust these values to taste.
+        These values are adjustable I just made them similar to nmap.
         """
         mapping = {
             "T0": 2,      # paranoid
@@ -403,7 +392,6 @@ class PortScanner:
         else:
             ports = list(self.common_ports.keys())
 
-        # Threads
         try:
             tcount = input(f"Threads (default {DEFAULT_THREAD_COUNT}): ").strip()
             threads = int(tcount) if tcount.isdigit() else DEFAULT_THREAD_COUNT
@@ -412,7 +400,6 @@ class PortScanner:
         except Exception:
             threads = DEFAULT_THREAD_COUNT
 
-        # Rate control / timing
         self.safe_print("\nRate control options:")
         self.safe_print("1) Packets per second (custom PPS)")
         self.safe_print("2) Nmap timing template (T0-T5)")
