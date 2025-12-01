@@ -294,9 +294,13 @@ class PortScanner:
                     cves = CVE_CACHE[cache_key]
                 else:
                     product, version = CVELookup.extract_version(banner)
-                    if product and version:
+                    if not product:
+                        product = CVELookup.fuzzy_product_match(banner)
+
+                    if product:
                         cves = CVELookup.search_cves(product, version)
-                    CVE_CACHE[cache_key] = cves
+                    else:
+                        cves = []
 
                 with self._results_lock:
                     self.open_ports.append((port, service, banner, cves))
