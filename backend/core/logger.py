@@ -32,7 +32,7 @@ class Logging:
         """
         Loads the config from the logger.yaml if the file is not found then it will create on in the root of the project
         """
-        config_path = Path(__file__).resolve().parent.parent / "logger.yaml"
+        config_path = Path(__file__).resolve().parent.parent / "../../logger.yaml"
         
         default_config = {
             'format': 'json',

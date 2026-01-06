@@ -14,7 +14,7 @@ class WebVulnerabilityScanner:
     OWASP Top 10 Web Application Vulnerability Scanner. Performs automated heuristic tests for OWASP Top 10 web
     """
 
-    description = "Scans for OWASP Top 10 web vulnerabilities (SQLi, XSS, CSRF, etc.)"
+    description = "Scans for OWASP Top 10 2021 web vulnerabilities (SQLi, XSS, CSRF, etc.)"
 
     def __init__(self):
         """
