@@ -14,7 +14,7 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.progress import Progress, BarColumn, TimeRemainingColumn
 
-from core.logger import logger
+from backend.core.logger import logger
 
 
 class LinuxBaselineScanner:
