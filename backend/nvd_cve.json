@@ -1,0 +1,585 @@
+[
+  {
+    "id": "CVE-2016-0746",
+    "published": "2016-02-15T19:59:01.157",
+    "lastModified": "2025-04-12T10:46:40.837",
+    "summary": "Use-after-free vulnerability in the resolver in nginx 0.6.18 through 1.8.0 and 1.9.x before 1.9.10 allows remote attackers to cause a denial of service (worker process crash) or possibly have unspecified other impact via a crafted DNS response related to CNAME response processing.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "http://lists.opensuse.org/opensuse-updates/2016-02/msg00042.html",
+      "http://mailman.nginx.org/pipermail/nginx/2016-January/049700.html",
+      "http://seclists.org/fulldisclosure/2021/Sep/36",
+      "http://www.debian.org/security/2016/dsa-3473",
+      "http://www.securitytracker.com/id/1034869",
+      "http://www.ubuntu.com/usn/USN-2892-1",
+      "https://access.redhat.com/errata/RHSA-2016:1425",
+      "https://bto.bluecoat.com/security-advisory/sa115",
+      "https://bugzilla.redhat.com/show_bug.cgi?id=1302588",
+      "https://security.gentoo.org/glsa/201606-06",
+      "https://support.apple.com/kb/HT212818",
+      "http://lists.opensuse.org/opensuse-updates/2016-02/msg00042.html",
+      "http://mailman.nginx.org/pipermail/nginx/2016-January/049700.html",
+      "http://seclists.org/fulldisclosure/2021/Sep/36",
+      "http://www.debian.org/security/2016/dsa-3473",
+      "http://www.securitytracker.com/id/1034869",
+      "http://www.ubuntu.com/usn/USN-2892-1",
+      "https://access.redhat.com/errata/RHSA-2016:1425",
+      "https://bto.bluecoat.com/security-advisory/sa115",
+      "https://bugzilla.redhat.com/show_bug.cgi?id=1302588",
+      "https://security.gentoo.org/glsa/201606-06",
+      "https://support.apple.com/kb/HT212818"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2018-1000653",
+    "published": "2018-08-20T19:31:44.590",
+    "lastModified": "2024-11-21T03:40:20.017",
+    "summary": "zzcms version 8.3 and earlier contains a SQL Injection vulnerability in zt/top.php line 5 that can result in could be attacked by sql injection in zzcms in nginx. This attack appear to be exploitable via running zzcms in nginx.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://gist.github.com/Lz1y/3388fa886a3e10edd2a7e93d3c3e5b6c",
+      "https://gist.github.com/Lz1y/3388fa886a3e10edd2a7e93d3c3e5b6c"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2019-7401",
+    "published": "2019-02-08T03:29:00.247",
+    "lastModified": "2025-08-12T17:24:44.367",
+    "summary": "NGINX Unit before 1.7.1 might allow an attacker to cause a heap-based buffer overflow in the router process with a specially crafted request. This may result in a denial of service (router process crash) or possibly have unspecified other impact.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "http://hg.nginx.org/unit/file/tip/CHANGES",
+      "http://mailman.nginx.org/pipermail/unit/2019-February/000113.html",
+      "http://unit.nginx.org/CHANGES.txt",
+      "http://www.securityfocus.com/bid/106956",
+      "http://hg.nginx.org/unit/file/tip/CHANGES",
+      "http://mailman.nginx.org/pipermail/unit/2019-February/000113.html",
+      "http://unit.nginx.org/CHANGES.txt",
+      "http://www.securityfocus.com/bid/106956"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2018-11747",
+    "published": "2019-03-21T16:00:11.593",
+    "lastModified": "2024-11-21T03:43:57.247",
+    "summary": "Previously, Puppet Discovery was shipped with a default generated TLS certificate in the nginx container. In version 1.4.0, a unique certificate will be generated on installation or the user will be able to provide their own TLS certificate for ingress.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://lists.apache.org/thread.html/rd0e44e8ef71eeaaa3cf3d1b8b41eb25894372e2995ec908ce7624d26%40%3Ccommits.pulsar.apache.org%3E",
+      "https://puppet.com/security/cve/CVE-2018-11747",
+      "https://lists.apache.org/thread.html/rd0e44e8ef71eeaaa3cf3d1b8b41eb25894372e2995ec908ce7624d26%40%3Ccommits.pulsar.apache.org%3E",
+      "https://puppet.com/security/cve/CVE-2018-11747"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2019-9945",
+    "published": "2019-03-23T16:29:01.890",
+    "lastModified": "2024-11-21T04:52:38.800",
+    "summary": "SoftNAS Cloud 4.2.0 and 4.2.1 allows remote command execution. The NGINX default configuration file has a check to verify the status of a user cookie. If not set, a user is redirected to the login page. An arbitrary value can be provided for this cookie to access the web interface without valid user credentials. If customers have not followed SoftNAS deployment best practices and expose SoftNAS StorageCenter ports directly to the internet, this vulnerability allows an attacker to gain access to the Webadmin interface to create new users or execute arbitrary commands with administrative privileges, compromising both the platform and the data.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://www.digitaldefense.com/blog/2019-softnas-cloud-zero-day-blog/",
+      "https://www.digitaldefense.com/blog/2019-softnas-cloud-zero-day-blog/"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2019-9161",
+    "published": "2019-04-18T23:29:00.517",
+    "lastModified": "2024-11-21T04:51:06.693",
+    "summary": "WAC on the Sangfor Sundray WLAN Controller version 3.7.4.2 and earlier has a Remote Code Execution issue allowing remote attackers to achieve full access to the system, because shell metacharacters in the nginx_webconsole.php Cookie header can be used to read an etc/config/wac/wns_cfg_admin_detail.xml file containing the admin password. (The password for root is the WebUI admin password concatenated with a static string.)",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "http://www.cnvd.org.cn/flaw/show/CNVD-2019-07679",
+      "http://www.cnvd.org.cn/flaw/show/CNVD-2019-07679"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2019-11838",
+    "published": "2019-05-09T14:29:00.557",
+    "lastModified": "2024-11-21T04:21:52.120",
+    "summary": "njs through 0.3.1, used in NGINX, has a heap-based buffer overflow in Array.prototype.splice after a resize, related to njs_array_prototype_splice in njs/njs_array.c, because of njs_array_expand size mishandling.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/issues/153",
+      "https://github.com/nginx/njs/issues/153"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2019-11839",
+    "published": "2019-05-09T14:29:00.637",
+    "lastModified": "2024-11-21T04:21:52.253",
+    "summary": "njs through 0.3.1, used in NGINX, has a heap-based buffer overflow in Array.prototype.push after a resize, related to njs_array_prototype_push in njs/njs_array.c, because of njs_array_expand size mishandling.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/issues/152",
+      "https://github.com/nginx/njs/issues/152"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2019-12206",
+    "published": "2019-05-20T14:29:00.697",
+    "lastModified": "2024-11-21T04:22:25.087",
+    "summary": "njs through 0.3.1, used in NGINX, has a heap-based buffer overflow in nxt_utf8_encode in nxt_utf8.c.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/issues/162",
+      "https://github.com/nginx/njs/issues/162"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2019-12207",
+    "published": "2019-05-20T14:29:00.773",
+    "lastModified": "2024-11-21T04:22:25.223",
+    "summary": "njs through 0.3.1, used in NGINX, has a heap-based buffer over-read in nxt_utf8_decode in nxt/nxt_utf8.c.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/issues/168",
+      "https://github.com/nginx/njs/issues/168"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2019-12208",
+    "published": "2019-05-20T14:29:00.837",
+    "lastModified": "2024-11-21T04:22:25.360",
+    "summary": "njs through 0.3.1, used in NGINX, has a heap-based buffer overflow in njs_function_native_call in njs/njs_function.c.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/issues/163",
+      "https://github.com/nginx/njs/issues/163"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2019-13067",
+    "published": "2019-06-30T00:15:11.283",
+    "lastModified": "2024-11-21T04:24:07.910",
+    "summary": "njs through 0.3.3, used in NGINX, has a buffer over-read in nxt_utf8_decode in nxt/nxt_utf8.c. This issue occurs after the fix for CVE-2019-12207 is in place.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/issues/183",
+      "https://github.com/nginx/njs/issues/183"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2020-12443",
+    "published": "2020-04-29T02:15:11.467",
+    "lastModified": "2024-11-21T04:59:43.700",
+    "summary": "BigBlueButton before 2.2.6 allows remote attackers to read arbitrary files because the presfilename (lowercase) value can be a .pdf filename while the presFilename (mixed case) value has a ../ sequence. This can be leveraged for privilege escalation via a directory traversal to bigbluebutton.properties. NOTE: this issue exists because of an ineffective mitigation to CVE-2020-12112 in which there was an attempted fix within an NGINX configuration file, without considering that the relevant part of NGINX is case-insensitive.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/bigbluebutton/bigbluebutton/pull/9259/commits/b21ca8355a57286a1e6df96984b3a4c57679a463",
+      "https://github.com/mclab-hbrs/BBB-POC",
+      "https://github.com/bigbluebutton/bigbluebutton/pull/9259/commits/b21ca8355a57286a1e6df96984b3a4c57679a463",
+      "https://github.com/mclab-hbrs/BBB-POC"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2020-5901",
+    "published": "2020-07-01T15:15:15.280",
+    "lastModified": "2024-11-21T05:34:47.633",
+    "summary": "In NGINX Controller 3.3.0-3.4.0, undisclosed API endpoints may allow for a reflected Cross Site Scripting (XSS) attack. If the victim user is logged in as admin this could result in a complete compromise of the system.",
+    "cvss_score": 9.6,
+    "severity": "CRITICAL",
+    "references": [
+      "https://support.f5.com/csp/article/K43520321",
+      "https://support.f5.com/csp/article/K43520321"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2020-24660",
+    "published": "2020-09-14T13:15:10.030",
+    "lastModified": "2024-11-21T05:15:27.350",
+    "summary": "An issue was discovered in LemonLDAP::NG through 2.0.8, when NGINX is used. An attacker may bypass URL-based access control to protected Virtual Hosts by submitting a non-normalized URI. This also affects versions before 0.5.2 of the \"Lemonldap::NG handler for Node.js\" package.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/LemonLDAPNG/node-lemonldap-ng-handler/releases/tag/0.5.2",
+      "https://github.com/LemonLDAPNG/node-lemonldap-ng-handler/security/advisories/GHSA-x44x-r84w-8v67",
+      "https://gitlab.ow2.org/lemonldap-ng/lemonldap-ng/-/issues/2290",
+      "https://www.debian.org/security/2020/dsa-4762",
+      "https://github.com/LemonLDAPNG/node-lemonldap-ng-handler/releases/tag/0.5.2",
+      "https://github.com/LemonLDAPNG/node-lemonldap-ng-handler/security/advisories/GHSA-x44x-r84w-8v67",
+      "https://gitlab.ow2.org/lemonldap-ng/lemonldap-ng/-/issues/2290",
+      "https://www.debian.org/security/2020/dsa-4762"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2020-27730",
+    "published": "2020-12-11T20:15:16.643",
+    "lastModified": "2024-11-21T05:21:42.803",
+    "summary": "In versions 3.0.0-3.9.0, 2.0.0-2.9.0, and 1.0.1, the NGINX Controller Agent does not use absolute paths when calling system utilities.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://security.netapp.com/advisory/ntap-20210115-0004/",
+      "https://support.f5.com/csp/article/K43530108",
+      "https://security.netapp.com/advisory/ntap-20210115-0004/",
+      "https://support.f5.com/csp/article/K43530108"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2020-29658",
+    "published": "2021-03-05T09:15:13.410",
+    "lastModified": "2024-11-21T05:24:22.410",
+    "summary": "Zoho ManageEngine Application Control Plus before 100523 has an insecure SSL configuration setting for Nginx, leading to Privilege Escalation.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://www.manageengine.com/application-control/knowledge-base/privilege-escalation-vulnerability-open-SSL.html",
+      "https://www.manageengine.com/application-control/knowledge-base/privilege-escalation-vulnerability-open-SSL.html"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2021-32637",
+    "published": "2021-05-28T17:15:07.493",
+    "lastModified": "2024-11-21T06:07:25.700",
+    "summary": "Authelia is a a single sign-on multi-factor portal for web apps. This affects uses who are using nginx ngx_http_auth_request_module with Authelia, it allows a malicious individual who crafts a malformed HTTP request to bypass the authentication mechanism. It additionally could theoretically affect other proxy servers, but all of the ones we officially support except nginx do not allow malformed URI paths. The problem is rectified entirely in v4.29.3. As this patch is relatively straightforward we can back port this to any version upon request. Alternatively we are supplying a git patch to 4.25.1 which should be relatively straightforward to apply to any version, the git patches for specific versions can be found in the references. The most relevant workaround is upgrading. You can also add a block which fails requests that contains a malformed URI in the internal location block.",
+    "cvss_score": 10.0,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/authelia/authelia/commit/c62dbd43d6e69ae81530e7c4f8763857f8ff1dda",
+      "https://github.com/authelia/authelia/security/advisories/GHSA-68wm-pfjf-wqp6",
+      "https://github.com/authelia/authelia/commit/c62dbd43d6e69ae81530e7c4f8763857f8ff1dda",
+      "https://github.com/authelia/authelia/security/advisories/GHSA-68wm-pfjf-wqp6"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2017-20005",
+    "published": "2021-06-06T22:15:08.417",
+    "lastModified": "2024-11-21T03:22:25.910",
+    "summary": "NGINX before 1.13.6 has a buffer overflow for years that exceed four digits, as demonstrated by a file with a modification date in 1969 that causes an integer overflow (or a false modification date far in the future), when encountered by the autoindex module.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "http://nginx.org/en/CHANGES",
+      "https://github.com/nginx/nginx/commit/0206ebe76f748bb39d9de4dd4b3fce777fdfdccf",
+      "https://github.com/nginx/nginx/commit/b900cc28fcbb4cf5a32ab62f80b59292e1c85b4b",
+      "https://lists.debian.org/debian-lts-announce/2021/06/msg00009.html",
+      "https://security.netapp.com/advisory/ntap-20210805-0006/",
+      "https://trac.nginx.org/nginx/ticket/1368",
+      "http://nginx.org/en/CHANGES",
+      "https://github.com/nginx/nginx/commit/0206ebe76f748bb39d9de4dd4b3fce777fdfdccf",
+      "https://github.com/nginx/nginx/commit/b900cc28fcbb4cf5a32ab62f80b59292e1c85b4b",
+      "https://lists.debian.org/debian-lts-announce/2021/06/msg00009.html",
+      "https://security.netapp.com/advisory/ntap-20210805-0006/",
+      "https://trac.nginx.org/nginx/ticket/1368"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2021-46461",
+    "published": "2022-02-14T22:15:07.717",
+    "lastModified": "2024-11-21T06:34:07.703",
+    "summary": "njs through 0.7.0, used in NGINX, was discovered to contain an out-of-bounds array access via njs_vmcode_typeof in /src/njs_vmcode.c.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/commit/d457c9545e7e71ebb5c0479eb16b9d33175855e2",
+      "https://github.com/nginx/njs/issues/450",
+      "https://security.netapp.com/advisory/ntap-20220303-0007/",
+      "https://github.com/nginx/njs/commit/d457c9545e7e71ebb5c0479eb16b9d33175855e2",
+      "https://github.com/nginx/njs/issues/450",
+      "https://security.netapp.com/advisory/ntap-20220303-0007/"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2021-46463",
+    "published": "2022-02-14T22:15:07.793",
+    "lastModified": "2024-11-21T06:34:08.037",
+    "summary": "njs through 0.7.1, used in NGINX, was discovered to contain a control flow hijack caused by a Type Confusion vulnerability in njs_promise_perform_then().",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/commit/6a40a85ff239497c6458c7dbef18f6a2736fe992",
+      "https://github.com/nginx/njs/issues/447",
+      "https://security.netapp.com/advisory/ntap-20220303-0007/",
+      "https://github.com/nginx/njs/commit/6a40a85ff239497c6458c7dbef18f6a2736fe992",
+      "https://github.com/nginx/njs/issues/447",
+      "https://security.netapp.com/advisory/ntap-20220303-0007/"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2022-25139",
+    "published": "2022-02-14T22:15:08.317",
+    "lastModified": "2024-11-21T06:51:41.377",
+    "summary": "njs through 0.7.0, used in NGINX, was discovered to contain a heap use-after-free in njs_await_fulfilled.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/commit/6a07c2156a07ef307b6dcf3c2ca8571a5f1af7a6",
+      "https://github.com/nginx/njs/issues/451",
+      "https://security.netapp.com/advisory/ntap-20220303-0007/",
+      "https://github.com/nginx/njs/commit/6a07c2156a07ef307b6dcf3c2ca8571a5f1af7a6",
+      "https://github.com/nginx/njs/issues/451",
+      "https://security.netapp.com/advisory/ntap-20220303-0007/"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2021-45967",
+    "published": "2022-03-18T05:15:07.027",
+    "lastModified": "2024-11-21T06:33:23.640",
+    "summary": "An issue was discovered in Pascom Cloud Phone System before 7.20.x. A configuration error between NGINX and a backend Tomcat server leads to a path traversal in the Tomcat server, exposing unintended endpoints.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://kerbit.io/research/read/blog/4",
+      "https://tutorialboy24.blogspot.com/2022/03/the-story-of-3-bugs-that-lead-to.html",
+      "https://www.pascom.net/doc/en/release-notes/",
+      "https://www.pascom.net/doc/en/release-notes/pascom19/",
+      "https://kerbit.io/research/read/blog/4",
+      "https://tutorialboy24.blogspot.com/2022/03/the-story-of-3-bugs-that-lead-to.html",
+      "https://www.pascom.net/doc/en/release-notes/",
+      "https://www.pascom.net/doc/en/release-notes/pascom19/"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2022-27007",
+    "published": "2022-04-14T15:15:08.163",
+    "lastModified": "2024-11-21T06:55:00.130",
+    "summary": "nginx njs 0.7.2 is affected suffers from Use-after-free in njs_function_frame_alloc() when it try to invoke from a restored frame saved with njs_function_frame_save().",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/commit/ad48705bf1f04b4221a5f5b07715ac48b3160d53",
+      "https://github.com/nginx/njs/issues/469",
+      "https://security.netapp.com/advisory/ntap-20220519-0008/",
+      "https://github.com/nginx/njs/commit/ad48705bf1f04b4221a5f5b07715ac48b3160d53",
+      "https://github.com/nginx/njs/issues/469",
+      "https://security.netapp.com/advisory/ntap-20220519-0008/"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2022-29379",
+    "published": "2022-05-25T13:15:07.837",
+    "lastModified": "2024-11-21T06:58:59.083",
+    "summary": "Nginx NJS v0.7.3 was discovered to contain a stack overflow in the function njs_default_module_loader at /src/njs/src/njs_module.c. NOTE: multiple third parties dispute this report, e.g., the behavior is only found in unreleased development code that was not part of the 0.7.2, 0.7.3, or 0.7.4 release",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/commit/ab1702c7af9959366a5ddc4a75b4357d4e9ebdc1",
+      "https://github.com/nginx/njs/issues/491",
+      "https://github.com/nginx/njs/issues/493",
+      "https://github.com/nginx/njs/commit/ab1702c7af9959366a5ddc4a75b4357d4e9ebdc1",
+      "https://github.com/nginx/njs/issues/491",
+      "https://github.com/nginx/njs/issues/493"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2022-31125",
+    "published": "2022-07-06T18:15:19.367",
+    "lastModified": "2024-11-21T07:03:56.910",
+    "summary": "Roxy-wi is an open source web interface for managing Haproxy, Nginx, Apache and Keepalived servers. A vulnerability in Roxy-wi allows a remote, unauthenticated attacker to bypass authentication and access admin functionality by sending a specially crafted HTTP request. This affects Roxywi versions before 6.1.1.0. Users are advised to upgrade. There are no known workarounds for this issue.",
+    "cvss_score": 10.0,
+    "severity": "CRITICAL",
+    "references": [
+      "http://packetstormsecurity.com/files/171648/Roxy-WI-6.1.0.0-Improper-Authentication-Control.html",
+      "https://github.com/hap-wi/roxy-wi/security/advisories/GHSA-hr76-3hxp-5mm3",
+      "http://packetstormsecurity.com/files/171648/Roxy-WI-6.1.0.0-Improper-Authentication-Control.html",
+      "https://github.com/hap-wi/roxy-wi/security/advisories/GHSA-hr76-3hxp-5mm3"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2022-31126",
+    "published": "2022-07-06T18:15:19.433",
+    "lastModified": "2024-11-21T07:03:57.033",
+    "summary": "Roxy-wi is an open source web interface for managing Haproxy, Nginx, Apache and Keepalived servers. A vulnerability in Roxy-wi allows a remote, unauthenticated attacker to code execution by sending a specially crafted HTTP request to /app/options.py file. This affects Roxy-wi versions before 6.1.1.0. Users are advised to upgrade. There are no known workarounds for this issue.",
+    "cvss_score": 10.0,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/hap-wi/roxy-wi/security/advisories/GHSA-mh86-878h-43c9",
+      "https://github.com/hap-wi/roxy-wi/security/advisories/GHSA-mh86-878h-43c9"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2022-31137",
+    "published": "2022-07-08T20:15:07.980",
+    "lastModified": "2024-11-21T07:03:58.540",
+    "summary": "Roxy-WI is a web interface for managing Haproxy, Nginx, Apache and Keepalived servers. Versions prior to 6.1.1.0 are subject to a remote code execution vulnerability. System commands can be run remotely via the subprocess_execute function without processing the inputs received from the user in the /app/options.py file. Attackers need not be authenticated to exploit this vulnerability. Users are advised to upgrade. There are no known workarounds for this vulnerability.",
+    "cvss_score": 10.0,
+    "severity": "CRITICAL",
+    "references": [
+      "http://packetstormsecurity.com/files/167805/Roxy-WI-Remote-Command-Execution.html",
+      "http://packetstormsecurity.com/files/171648/Roxy-WI-6.1.0.0-Improper-Authentication-Control.html",
+      "http://packetstormsecurity.com/files/171652/Roxy-WI-6.1.1.0-Remote-Code-Execution.html",
+      "http://packetstormsecurity.com/files/172547/Roxy-WI-6.1.0.0-Remote-Command-Execution.html",
+      "https://github.com/hap-wi/roxy-wi/commit/82666df1e60c45dd6aa533b01a392f015d32f755",
+      "https://github.com/hap-wi/roxy-wi/security/advisories/GHSA-53r2-mq99-f532",
+      "http://packetstormsecurity.com/files/167805/Roxy-WI-Remote-Command-Execution.html",
+      "http://packetstormsecurity.com/files/171648/Roxy-WI-6.1.0.0-Improper-Authentication-Control.html",
+      "http://packetstormsecurity.com/files/171652/Roxy-WI-6.1.1.0-Remote-Code-Execution.html",
+      "http://packetstormsecurity.com/files/172547/Roxy-WI-6.1.0.0-Remote-Command-Execution.html",
+      "https://github.com/hap-wi/roxy-wi/commit/82666df1e60c45dd6aa533b01a392f015d32f755",
+      "https://github.com/hap-wi/roxy-wi/security/advisories/GHSA-53r2-mq99-f532"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2022-31161",
+    "published": "2022-07-15T21:15:08.710",
+    "lastModified": "2024-11-21T07:04:01.790",
+    "summary": "Roxy-WI is a Web interface for managing HAProxy, Nginx and Keepalived servers. Prior to version 6.1.1.0, the system command can be run remotely via the subprocess_execute function without processing the inputs received from the user in the /app/options.py file. Version 6.1.1.0 contains a patch for this issue.",
+    "cvss_score": 10.0,
+    "severity": "CRITICAL",
+    "references": [
+      "http://packetstormsecurity.com/files/171652/Roxy-WI-6.1.1.0-Remote-Code-Execution.html",
+      "https://github.com/hap-wi/roxy-wi/releases/tag/v6.1.1.0",
+      "https://github.com/hap-wi/roxy-wi/security/advisories/GHSA-pg3w-8p63-x483",
+      "http://packetstormsecurity.com/files/171652/Roxy-WI-6.1.1.0-Remote-Code-Execution.html",
+      "https://github.com/hap-wi/roxy-wi/releases/tag/v6.1.1.0",
+      "https://github.com/hap-wi/roxy-wi/security/advisories/GHSA-pg3w-8p63-x483"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2022-34029",
+    "published": "2022-07-18T21:15:07.910",
+    "lastModified": "2024-11-21T07:08:48.220",
+    "summary": "Nginx NJS v0.7.4 was discovered to contain an out-of-bounds read via njs_scope_value at njs_scope.h.",
+    "cvss_score": 9.1,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/issues/506",
+      "https://github.com/nginx/njs/issues/506"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2022-43286",
+    "published": "2022-10-28T21:15:10.213",
+    "lastModified": "2025-05-07T14:15:37.620",
+    "summary": "Nginx NJS v0.7.2 was discovered to contain a heap-use-after-free bug caused by illegal memory copy in the function njs_json_parse_iterator_call at njs_json.c.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/commit/2ad0ea24a58d570634e09c2e58c3b314505eaa6a",
+      "https://github.com/nginx/njs/issues/480",
+      "https://github.com/nginx/njs/commit/2ad0ea24a58d570634e09c2e58c3b314505eaa6a",
+      "https://github.com/nginx/njs/issues/480"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2023-27224",
+    "published": "2023-03-22T20:15:12.723",
+    "lastModified": "2025-02-25T21:15:12.467",
+    "summary": "An issue found in NginxProxyManager v.2.9.19 allows an attacker to execute arbitrary code via a lua script to the configuration file.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/LinuxProgramDevelop/NginxProxyManagerCommandInjectVulnInfo/blob/main/Nginx_proxy_manager_Command_Inject_vulnerability.pdf",
+      "https://github.com/NginxProxyManager/nginx-proxy-manager",
+      "https://github.com/LinuxProgramDevelop/NginxProxyManagerCommandInjectVulnInfo/blob/main/Nginx_proxy_manager_Command_Inject_vulnerability.pdf",
+      "https://github.com/NginxProxyManager/nginx-proxy-manager"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2020-19692",
+    "published": "2023-04-04T15:15:07.653",
+    "lastModified": "2025-08-12T17:56:57.180",
+    "summary": "Buffer Overflow vulnerabilty found in Nginx NJS v.0feca92 allows a remote attacker to execute arbitrary code via the njs_module_read in the njs_module.c file.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/issues/187",
+      "https://github.com/nginx/njs/issues/187"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2020-19695",
+    "published": "2023-04-04T15:15:07.747",
+    "lastModified": "2025-08-12T18:09:57.680",
+    "summary": "Buffer Overflow found in Nginx NJS allows a remote attacker to execute arbitrary code via the njs_object_property parameter of the njs/njs_vm.c function.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/nginx/njs/issues/188",
+      "https://github.com/nginx/njs/issues/188"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2023-45132",
+    "published": "2023-10-11T21:15:10.207",
+    "lastModified": "2024-11-21T08:26:24.447",
+    "summary": "NAXSI is an open-source maintenance web application firewall (WAF) for NGINX. An issue present starting in version 1.3 and prior to version 1.6 allows someone to bypass the WAF when a malicious `X-Forwarded-For` IP matches `IgnoreIP` `IgnoreCIDR` rules. This old code was arranged to allow older NGINX versions to also support `IgnoreIP` `IgnoreCIDR` when multiple reverse proxies were present. The issue is patched in version 1.6. As a workaround, do not set any `IgnoreIP` `IgnoreCIDR` for older versions.",
+    "cvss_score": 9.1,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/wargio/naxsi/commit/1b712526ed3314dd6be7e8b0259eabda63c19537",
+      "https://github.com/wargio/naxsi/pull/103",
+      "https://github.com/wargio/naxsi/security/advisories/GHSA-7qjc-q4j9-pc8x",
+      "https://github.com/wargio/naxsi/commit/1b712526ed3314dd6be7e8b0259eabda63c19537",
+      "https://github.com/wargio/naxsi/pull/103",
+      "https://github.com/wargio/naxsi/security/advisories/GHSA-7qjc-q4j9-pc8x"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2023-50919",
+    "published": "2024-01-12T08:15:43.533",
+    "lastModified": "2025-06-03T14:15:34.507",
+    "summary": "An issue was discovered on GL.iNet devices before version 4.5.0. There is an NGINX authentication bypass via Lua string pattern matching. This affects A1300 4.4.6, AX1800 4.4.6, AXT1800 4.4.6, MT3000 4.4.6, MT2500 4.4.6, MT6000 4.5.0, MT1300 4.3.7, MT300N-V2 4.3.7, AR750S 4.3.7, AR750 4.3.7, AR300M 4.3.7, and B1300 4.3.7.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "http://packetstormsecurity.com/files/176708/GL.iNet-Unauthenticated-Remote-Command-Execution.html",
+      "https://github.com/gl-inet/CVE-issues/blob/main/4.0.0/Authentication-bypass.md",
+      "http://packetstormsecurity.com/files/176708/GL.iNet-Unauthenticated-Remote-Command-Execution.html",
+      "https://github.com/gl-inet/CVE-issues/blob/main/4.0.0/Authentication-bypass.md"
+    ],
+    "is_kev": false
+  },
+  {
+    "id": "CVE-2024-23827",
+    "published": "2024-01-29T16:15:09.867",
+    "lastModified": "2024-11-21T08:58:30.357",
+    "summary": "Nginx-UI is a web interface to manage Nginx configurations. The Import Certificate feature allows arbitrary write into the system. The feature does not check if the provided user input is a certification/key and allows to write into arbitrary paths in the system. It's possible to leverage the vulnerability into a remote code execution overwriting the config file app.ini. Version 2.0.0.beta.12 fixed the issue.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "references": [
+      "https://github.com/0xJacky/nginx-ui/security/advisories/GHSA-xvq9-4vpv-227m",
+      "https://github.com/0xJacky/nginx-ui/security/advisories/GHSA-xvq9-4vpv-227m"
+    ],
+    "is_kev": false
+  }
+]
