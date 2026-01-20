@@ -5,4 +5,4 @@ __pycache__/
 reports/
 logs/
 baseline/
-
+node_modules/
