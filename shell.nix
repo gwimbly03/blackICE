@@ -23,6 +23,8 @@ pkgs.mkShell {
     pkgs.python314Packages.urllib3
     pkgs.python314Packages.fastapi
     pkgs.python314Packages.uvicorn
+    pkgs.python314Packages.websockets
+
     pkgs.nodejs_25
 
   ];

@@ -12,20 +12,33 @@ export async function runModule(name) {
   const res = await fetch(`${API_BASE}/modules/${name}/run`, {
     method: "POST",
   });
-  if (!res.ok) throw new Error("Failed to start module");
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.detail || "Failed to start module");
+  }
+
   return res.json();
 }
 
 export async function stopModule(name) {
-  return fetch(`${API_BASE}/modules/${name}/stop`, {
+  const res = await fetch(`${API_BASE}/modules/${name}/stop`, {
     method: "POST",
   });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.detail || "Failed to stop module");
+  }
+
+  return res.json();
 }
 
 /* ---------------- WebSocket ---------------- */
 
 export function connectModuleWS(moduleName) {
-  const wsUrl = `ws://127.0.0.1:8000/ws/modules/${moduleName}`;
-  return new WebSocket(wsUrl);
+  return new WebSocket(
+    `ws://127.0.0.1:8000/ws/modules/${moduleName}`
+  );
 }
 

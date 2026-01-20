@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getModules, runModule } from "./api";
+import { getModules, runModule, stopModule } from "./api";
 import Navbar from "./components/nav";
 import Terminal from "./components/terminal";
 
@@ -10,6 +10,9 @@ export default function App() {
   const [selectedModule, setSelectedModule] = useState(null);
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState("");
+  const [clearSignal, setClearSignal] = useState(0);
+  const [wsReady, setWsReady] = useState(false);
+
 
   useEffect(() => {
     getModules().then((data) => {
@@ -18,18 +21,31 @@ export default function App() {
   }, []);
 
   const handleRun = async () => {
-    if (!selectedModule) return;
+    if (!selectedModule || running) return;
 
+    setClearSignal((c) => c + 1);
     setRunning(true);
     setStatus(`Running ${selectedModule}…`);
 
     try {
       await runModule(selectedModule);
       setStatus(`Module ${selectedModule} started`);
-    } catch (err) {
+    } catch {
       setStatus("Failed to start module");
-    } finally {
       setRunning(false);
+    }
+  };
+
+  const handleStop = async () => {
+    if (!selectedModule) return;
+
+    try {
+      await stopModule(selectedModule);
+      setStatus(`Module ${selectedModule} stopped`);
+      setRunning(false);
+      setClearSignal((c) => c + 1);
+    } catch {
+      setStatus("Failed to stop module");
     }
   };
 
@@ -50,18 +66,25 @@ export default function App() {
               <button
                 className="run-button"
                 onClick={handleRun}
-                disabled={running}
+                disabled={running || !wsReady}
               >
-                {running ? "Running…" : "Run Module"}
+                  {running ? "Running…" : wsReady ? "Run Module" : "Connecting…"}
               </button>
+
               <button
                 className="stop-button"
-                onClick={() => stopModule(selectedModule)}
+                onClick={handleStop}
+                disabled={!running}
               >
                 Stop
               </button>
 
-              <Terminal module={selectedModule} />
+              <Terminal
+                module={selectedModule}
+                clearSignal={clearSignal}
+                onReady={setWsReady}
+              />
+
               {status && <p className="status-text">{status}</p>}
             </>
           ) : (
@@ -72,4 +95,3 @@ export default function App() {
     </>
   );
 }
-

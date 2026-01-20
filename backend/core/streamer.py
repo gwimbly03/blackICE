@@ -18,4 +18,3 @@ class WebSocketStreamer:
 
     def flush(self):
         pass
-

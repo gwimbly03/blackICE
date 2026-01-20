@@ -1,26 +1,47 @@
-import "./terminal.css";
-
 import { useEffect, useRef, useState } from "react";
+import AnsiToHtml from "ansi-to-html";
 
-export default function Terminal({ module }) {
+const ansi = new AnsiToHtml({
+  fg: "#e5e7eb",
+  bg: "#000000",
+  newline: true,
+  escapeXML: true,
+});
+
+export default function Terminal({ module, clearSignal, onReady }) {
   const [lines, setLines] = useState([]);
+  const [input, setInput] = useState("");
   const wsRef = useRef(null);
-  const endRef = useRef(null);
+  const bottomRef = useRef(null);
 
   useEffect(() => {
-    if (!module) return;
-
     setLines([]);
+    onReady(false);
+
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    if (!module) return;
 
     const ws = new WebSocket(`ws://127.0.0.1:8000/ws/modules/${module}`);
     wsRef.current = ws;
 
-    ws.onmessage = (event) => {
-      setLines((prev) => [...prev, event.data]);
+    ws.onopen = () => {
+      onReady(true);   
+    };
+
+    ws.onmessage = (e) => {
+      setLines((prev) => [...prev, e.data]);
     };
 
     ws.onerror = () => {
       setLines((prev) => [...prev, "[WebSocket error]"]);
+    };
+
+    ws.onclose = () => {
+      onReady(false);
     };
 
     return () => {
@@ -29,17 +50,44 @@ export default function Terminal({ module }) {
   }, [module]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    setLines([]);
+  }, [clearSignal]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [lines]);
+
+  const sendInput = (e) => {
+    if (e.key === "Enter" && wsRef.current && input.trim()) {
+      wsRef.current.send(input);
+      setLines((prev) => [...prev, `> ${input}`]);
+      setInput("");
+    }
+  };
 
   return (
     <div className="terminal">
       {lines.map((line, i) => (
-        <div key={i} className="terminal-line">
-          {line}
-        </div>
+        <div
+          key={i}
+          className="terminal-line"
+          dangerouslySetInnerHTML={{
+            __html: ansi.toHtml(line),
+          }}
+        />
       ))}
-      <div ref={endRef} />
+
+      <div className="terminal-input">
+        <span>&gt;</span>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={sendInput}
+          autoFocus
+        />
+      </div>
+
+      <div ref={bottomRef} />
     </div>
   );
 }

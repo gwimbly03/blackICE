@@ -1,11 +1,10 @@
-from fastapi import FastAPI, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
+from os import wait
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.engine import PentestEngine
 from backend.core.interactive_tty import InteractiveTTY
 import sys
 import asyncio
-
-running_tasks = {}
 
 app = FastAPI(
     title="BlackICE API",
@@ -21,15 +20,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Lazy-loading engine (NO discover_modules call)
 engine = PentestEngine()
 
-# WebSocket connections per module
+# State
 module_ws_connections: dict[str, list[WebSocket]] = {}
 module_ttys: dict[str, InteractiveTTY] = {}
 running_tasks: dict[str, asyncio.Task] = {}
-stdout_lock = asyncio.Lock()
 
+# ---------------- WebSocket ----------------
 
 @app.websocket("/ws/modules/{module_name}")
 async def module_ws(websocket: WebSocket, module_name: str):
@@ -37,16 +35,12 @@ async def module_ws(websocket: WebSocket, module_name: str):
 
     module_ws_connections.setdefault(module_name, []).append(websocket)
 
-    if module_name not in module_ttys:
-        module_ttys[module_name] = InteractiveTTY(
-            module_name,
-            module_ws_connections
-        )
-
     try:
         while True:
             msg = await websocket.receive_text()
-            module_ttys[module_name].push_input(msg)
+            tty = module_ttys.get(module_name)
+            if tty:
+                tty.push_input(msg)
     except WebSocketDisconnect:
         module_ws_connections[module_name].remove(websocket)
 
@@ -65,8 +59,13 @@ def list_modules():
 
 @app.post("/modules/{module_name}/run")
 async def run_module(module_name: str):
-    if module_name in running_tasks:
-        raise HTTPException(status_code=400, detail="Module already running")
+
+    # Allow only one module at a time
+    if running_tasks:
+        raise HTTPException(
+            status_code=400,
+            detail="Another module is already running"
+        )
 
     if module_name not in engine.available_modules:
         raise HTTPException(status_code=404, detail="Unknown module")
@@ -84,6 +83,8 @@ async def run_module(module_name: str):
             sys.stdout = tty
             sys.stdin = tty
             engine.run_module(module_name)
+        except Exception as e:
+            print(f"[ERROR] {e}")
         finally:
             sys.stdout = original_stdout
             sys.stdin = original_stdin
@@ -96,11 +97,15 @@ async def run_module(module_name: str):
 
 @app.post("/modules/{module_name}/stop")
 async def stop_module(module_name: str):
-    task = running_tasks.get(module_name)
-    if not task:
+    if module_name not in running_tasks:
         raise HTTPException(status_code=404, detail="Module not running")
 
-    task.cancel()
+    tty = module_ttys.get(module_name)
+    if tty:
+        tty.close()  # signals stdin EOF
+
     running_tasks.pop(module_name, None)
 
     return {"status": "stopped", "module": module_name}
+
+
