@@ -19,11 +19,12 @@ Advanced, modular pentesting engine written in Python, a collection of scanners 
 ---
 ## Features (What has been implemented so far)
 
-* Modular engine that discovers and runs modules from the modules/ directory.
+* Modular engine that lazy loads modules from the modules/ directory.
 * Custom logging system that can write logs in JSON or CSV, configurable via YAML.
 * Terminal and email notifications summarizing module runs and baseline diffs.
-* Fully functional port scanner that works similar to Nmap and other popular port scanning tools.
+* Fully functional modules that allow for testing on servers and large networks.
 * NVE CVE TUI.
+* Fully working web app that has a terminal output which allows you to run all modules.
 
 ---
 
@@ -31,6 +32,8 @@ Advanced, modular pentesting engine written in Python, a collection of scanners 
 
 * Python 3.8 or newer
 * `pip` (Python package installer)
+* NodeJS 25 or newer
+* `npm` (Node Package manager)
 
 ---
 
@@ -42,6 +45,8 @@ Advanced, modular pentesting engine written in Python, a collection of scanners 
 git clone https://github.com/towelie03/blackICE.git
 cd blackICE
 pip install -r requirements.txt
+npm install
+
 
 ```
 Use a virtual environment to keep dependencies isolated.
@@ -101,12 +106,23 @@ Start the program with:
 ```bash
 python main.py
 ```
-
 When the program starts, it will:
 1. Discover modules under modules/
 2. Prompt user to chose the catagorie they want to use 
 3. Run selected modules inside that catagorie 
 4. Save logs to the logs/ folder
+
+To launch the FastAPI backend (API + WebSocket server), from the project root run:
+
+```bash
+uvicorn backend.api:app --reload
+```
+
+To start the web-based user interface, run:
+
+```bash
+npm run dev
+```
 
 ---
 ## CVE Database Integration
@@ -130,17 +146,59 @@ Choose [0/1/2/4] (0):
 ---
 ## Directory Layout 
 ```
-blackICE/
-├─ core/
-│  ├─ engine.py
-│  └─ logger.py
-├─ modules/
-│  └─ Pentesting modules
-├─ logs/
-├─ baseline/
-├─ logger.yml
-├─ requirements.txt
-└─ main.py
+├── backend
+│   ├── api.py
+│   ├── baseline
+│   ├── core
+│   │   ├── cve_db.py
+│   │   ├── engine.py
+│   │   ├── __init__.py
+│   │   ├── interactive_tty.py
+│   │   ├── logger.py
+│   │   ├── module_runner.py
+│   │   ├── __pycache__
+│   │   └── streamer.py
+│   ├── __init__.py
+│   ├── logs
+│   ├── modules
+│   │   ├── arp_spoofing.py
+│   │   ├── cve_search.py
+│   │   ├── ddos_attacks.py
+│   │   ├── dns_cache_poisoning.py
+│   │   ├── dns_enum.py
+│   │   ├── gateway_scan.py
+│   │   ├── linux_baseline_scanner.py
+│   │   ├── port_scan.py
+│   │   ├── __pycache__
+│   │   ├── ssl_scan.py
+│   │   ├── vuln_scan.py
+│   │   └── web_vuln_scan.py
+│   ├── nvd_cve.json
+├── frontend
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── public
+│   ├── README.md
+│   ├── src
+│   │   ├── api.js
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── assets
+│   │   ├── components
+│   │   ├── index.css
+│   │   ├── main.jsx
+│   │   └── ModuleConsole.jsx
+│   └── vite.config.js
+├── logger.yaml
+├── main.py
+├── node_modules
+├── package.json
+├── package-lock.json
+├── README.md
+├── requirements.txt
+└── shell.nix
 ```
 
 ---
@@ -159,3 +217,13 @@ Notifiactions that notify the user by email and on the terminal about when a mod
 * Created a complete NVD CVE Live Reporter that uses the official NVD API v2.0 with full parameter support, automatic pagination, rich interactive tables, severity/KEV filtering, and export to JSON/Markdown/HTML. It works as long as you have network access on the host.
 * Started the FASTAPI implementation for the backend.
 
+---
+
+## What I delivered in Milestone 3
+
+* Implemented a modular execution engine that lazy loads modules. Added REST endpoints to: list available modules, start a module on demand, stop a module safely at any time.
+* Integrated WebSocket-based real-time output streaming for module execution and a InteractiveTTY system to: capture module stdout, stream output live to the web UI support interactive stdin where applicable.
+* Fixed module runner issues allowing for modules to only start when explicitly triggered by the UI. Stop operations are now idempotent, preventing errors when stopping completed modules (Which happened during the live demo).
+* Ensured clean cleanup of tasks, WebSockets, and internal state after module execution.
+* Build a web UI to view all discovered modules, select and switch between modules and start and stop modules via UI controls
+* Handle module switching and completion gracefully without crashing or desyncing and integrated ANSI-to-HTML conversion for readable terminal output in the browser.
