@@ -14,7 +14,9 @@ Advanced, modular pentesting engine written in Python, a collection of scanners 
   - [Run the program](#1-run-the-program)
 - [CVE Database Integration](#cve-database-integration) 
 - [Directory layout](#directory-layout)
+- [What I delivered in Milestone 1](#what-i-delivered-in-milestone-1)  
 - [What I delivered in Milestone 2](#what-i-delivered-in-milestone-2)  
+- [What I delivered in Milestone 3](#what-i-delivered-in-milestone-3)  
 
 ---
 ## Features (What has been implemented so far)
@@ -46,9 +48,8 @@ git clone https://github.com/towelie03/blackICE.git
 cd blackICE
 pip install -r requirements.txt
 npm install
-
-
 ```
+
 Use a virtual environment to keep dependencies isolated.
 
 ---
@@ -112,17 +113,18 @@ When the program starts, it will:
 3. Run selected modules inside that catagorie 
 4. Save logs to the logs/ folder
 
-To launch the FastAPI backend (API + WebSocket server), from the project root run:
+To launch the FastAPI backend (API + WebSocket server) at ```127.0.0.1:8000```, from the project root run:
 
 ```bash
 uvicorn backend.api:app --reload
 ```
 
-To start the web-based user interface, run:
+To start the web-based user interface at ```127.0.0.1:5173```, run:
 
 ```bash
 npm run dev
 ```
+
 
 ---
 ## CVE Database Integration
