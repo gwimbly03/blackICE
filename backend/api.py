@@ -22,12 +22,10 @@ app.add_middleware(
 
 engine = PentestEngine()
 
-# State
 module_ws_connections: dict[str, list[WebSocket]] = {}
 module_ttys: dict[str, InteractiveTTY] = {}
 running_tasks: dict[str, asyncio.Task] = {}
 
-# ---------------- WebSocket ----------------
 
 @app.websocket("/ws/modules/{module_name}")
 async def module_ws(websocket: WebSocket, module_name: str):
@@ -44,7 +42,6 @@ async def module_ws(websocket: WebSocket, module_name: str):
     except WebSocketDisconnect:
         module_ws_connections[module_name].remove(websocket)
 
-# ---------------- REST ----------------
 
 @app.get("/health")
 def health():
@@ -60,7 +57,6 @@ def list_modules():
 @app.post("/modules/{module_name}/run")
 async def run_module(module_name: str):
 
-    # Allow only one module at a time
     if running_tasks:
         raise HTTPException(
             status_code=400,
@@ -97,15 +93,18 @@ async def run_module(module_name: str):
 
 @app.post("/modules/{module_name}/stop")
 async def stop_module(module_name: str):
-    if module_name not in running_tasks:
-        raise HTTPException(status_code=404, detail="Module not running")
+    tty = module_ttys.pop(module_name, None)
+    task = running_tasks.pop(module_name, None)
 
-    tty = module_ttys.get(module_name)
     if tty:
-        tty.close()  # signals stdin EOF
+        tty.close()
 
-    running_tasks.pop(module_name, None)
+    if task:
+        task.cancel()
 
-    return {"status": "stopped", "module": module_name}
+    return {
+        "status": "stopped",
+        "module": module_name,
+    }
 
 

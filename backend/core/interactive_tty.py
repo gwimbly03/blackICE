@@ -9,7 +9,6 @@ class InteractiveTTY:
         self.loop = asyncio.get_event_loop()
         self.closed = False
 
-    # STDOUT
     def write(self, data: str):
         if not data or self.closed:
             return
@@ -23,10 +22,9 @@ class InteractiveTTY:
     def flush(self):
         pass
 
-    # STDIN
     def readline(self):
         data = self.input_queue.get()
-        if data is None:          # ← EOF SIGNAL
+        if data is None:          
             return ""
         return data + "\n"
 
@@ -36,5 +34,5 @@ class InteractiveTTY:
 
     def close(self):
         self.closed = True
-        self.input_queue.put(None)  # ← UNBLOCK readline()
+        self.input_queue.put(None)  
 

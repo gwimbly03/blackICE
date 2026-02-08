@@ -1,6 +1,5 @@
 const API_BASE = "http://127.0.0.1:8000";
 
-/* ---------------- REST ---------------- */
 
 export async function getModules() {
   const res = await fetch(`${API_BASE}/modules`);
@@ -34,7 +33,6 @@ export async function stopModule(name) {
   return res.json();
 }
 
-/* ---------------- WebSocket ---------------- */
 
 export function connectModuleWS(moduleName) {
   return new WebSocket(

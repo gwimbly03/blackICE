@@ -1,6 +1,6 @@
 .app-body {
   padding: 2rem;
-  padding-top: 80px; /* ⬅ space for navbar */
+  padding-top: 80px; 
   color: #ccc;
   font-family: monospace;
 }
