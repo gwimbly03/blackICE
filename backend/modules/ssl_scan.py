@@ -3,7 +3,7 @@ import ssl
 import OpenSSL
 from datetime import datetime
 from typing import Dict, List, Any
-from core.logger import logger
+from backend.core.logger import logger
 
 class SSLScanner:
     """

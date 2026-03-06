@@ -8,7 +8,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from core.logger import logger
+from backend.core.logger import logger
 
 class GatewayScanner:
     """

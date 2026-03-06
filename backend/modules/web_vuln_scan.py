@@ -2,7 +2,7 @@ import requests
 import json
 import time
 from urllib.parse import urljoin, quote
-from core.logger import logger
+from backend.core.logger import logger
 
 # Disable SSL warnings for testing
 import urllib3

@@ -4,9 +4,9 @@ from datetime import datetime
 from threading import Thread, Lock
 from queue import Queue
 from typing import Callable, List, Tuple, Any, Optional
-from core.logger import logger
+from backend.core.logger import logger
 from scapy.all import IP, TCP, sr1, send, conf
-from core.cve_db import CVELookup
+from backend.core.cve_db import CVELookup
 
 conf.verb = 0  
 

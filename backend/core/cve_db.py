@@ -1,4 +1,3 @@
-# core/cve_db.py
 import requests
 import re
 import time
