@@ -13,7 +13,6 @@ export default function App() {
   const [clearSignal, setClearSignal] = useState(0);
   const [wsReady, setWsReady] = useState(false);
 
-
   useEffect(() => {
     getModules().then((data) => {
       setModules(data.available ?? data.modules ?? []);
@@ -63,21 +62,23 @@ export default function App() {
             <>
               <h2>Selected: {selectedModule}</h2>
 
-              <button
-                className="run-button"
-                onClick={handleRun}
-                disabled={running || !wsReady}
-              >
+              <div className="button-row">
+                <button
+                  className="run-button"
+                  onClick={handleRun}
+                  disabled={running || !wsReady}
+                >
                   {running ? "Running…" : wsReady ? "Run Module" : "Connecting…"}
-              </button>
+                </button>
 
-              <button
-                className="stop-button"
-                onClick={handleStop}
-                disabled={!running}
-              >
-                Stop
-              </button>
+                <button
+                  className="stop-button"
+                  onClick={handleStop}
+                  disabled={!running}
+                >
+                  Stop
+                </button>
+              </div>
 
               <Terminal
                 module={selectedModule}

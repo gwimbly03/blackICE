@@ -1,5 +1,13 @@
 {
   "dependencies": {
     "ansi-to-html": "^0.7.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "scripts": {
+    "frontend": "npm run dev --prefix frontend",
+    "backend": "uvicorn backend.api:app --reload",
+    "start": "concurrently \"npm run backend\" \"npm run frontend\""
   }
 }

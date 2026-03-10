@@ -1,56 +1,136 @@
-.app-body {
-  padding: 2rem;
-  padding-top: 80px; 
-  color: #ccc;
-  font-family: monospace;
+/* ======================
+   Global
+====================== */
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
 }
 
+body {
+  font-family: Inter, system-ui, sans-serif;
+  background: #05070c;
+  color: #e5e7eb;
+}
+
+/* ======================
+   App Layout
+====================== */
+
+.app-body {
+  height: calc(100vh - 70px); /* subtract navbar height */
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+}
 
 .module-controls {
-  margin-top: 2rem;
-  font-family: monospace;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.module-selected {
-  color: #ccc;
-  margin-bottom: 0.75rem;
+/* ======================
+   Navbar
+====================== */
+
+.navbar {
+  width: 100%;
+  background: #070b12;
+  border-bottom: 1px solid #1f2937;
+  padding: 1rem 0;
 }
 
-.module-selected span {
-  color: #0f0;
+.navbar-inner {
+  max-width: 1200px;
+  margin: auto;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 0 2rem;
+}
+
+.brand {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #00ff9d;
+}
+
+.module-select {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #1f2937;
+  background: #0f172a;
+  color: white;
+}
+
+/* ======================
+   Buttons
+====================== */
+
+.button-row {
+  margin-bottom: 1rem;
+}
+
+.run-button,
+.stop-button {
+  padding: 0.8rem 1.6rem;
+  margin-right: 0.5rem;
+
+  border-radius: 10px;
+  border: none;
+
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: 0.2s ease;
 }
 
 .run-button {
-  background: #111;
-  color: #0f0;
-  border: 1px solid #0f0;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-family: monospace;
-}
-
-.run-button:hover:not(:disabled) {
-  background: #0f0;
-  color: #000;
-}
-
-.run-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.status-text {
-  margin-top: 0.75rem;
-  color: #888;
+  background: linear-gradient(45deg, #00ff9d, #00b8ff);
+  color: black;
 }
 
 .stop-button {
-  margin-left: 1rem;
-  padding: 0.6rem 1.2rem;
-  background: #ff4444;
-  border: none;
+  background: #1f2937;
   color: white;
-  font-weight: bold;
-  cursor: pointer;
 }
 
+.run-button:hover:not(:disabled),
+.stop-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+/* ======================
+   Terminal
+====================== */
+
+.terminal {
+  flex: 1;
+  width: 100%;
+  background: #000;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px #222;
+  margin-top: 1rem;
+}
+
+/* xterm internal padding */
+.xterm {
+  padding: 10px;
+}
+
+/* ======================
+   Status
+====================== */
+
+.status-text {
+  color: #9ca3af;
+  margin-top: 0.8rem;
+}

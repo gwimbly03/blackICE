@@ -18,13 +18,16 @@ class Logging:
         """
         This sets up the logging folder, object and loads configurations
         """
-        self.config = self._load_config()
-        
-        project_root = Path(__file__).resolve().parent.parent  # Goes from core/logger.py to blackice root
-        self.output_dir = project_root / self.config['output_dir']
-        self.output_dir.mkdir(exist_ok=True)
+        project_root = Path.cwd()
 
-        self.entries = []
+        self.config_path = project_root / "logger.yaml"
+
+        self.config = self._load_config()
+
+        self.output_dir = project_root / self.config['output_dir']
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        self.entries: List[Dict[str, Any]] = []
         self.start_time = datetime.now()
         self.output_format = self.config['format']
 
@@ -32,7 +35,7 @@ class Logging:
         """
         Loads the config from the logger.yaml if the file is not found then it will create on in the root of the project
         """
-        config_path = Path(__file__).resolve().parent.parent / "../../logger.yaml"
+        config_path = self.config_path
         
         default_config = {
             'format': 'json',

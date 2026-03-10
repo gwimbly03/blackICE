@@ -1,37 +1,47 @@
 .navbar {
-  position: fixed;          /* 🔒 stick to viewport */
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;              /* 🌐 full width */
+  width: 100%;
   height: 56px;
-
-  background: #0b0f14;
-  border-bottom: 1px solid #222;
+  background: rgba(5, 5, 5, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #1f2937;
   z-index: 1000;
+  display: flex;
+  align-items: center;
 }
 
 .navbar-inner {
-  height: 100%;
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0 1rem;
-
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .brand {
-  color: #ff3b3b;
-  font-weight: bold;
-  font-size: 1.2rem;
+  color: #00ff9d; /* Unified to Green */
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.5px;
+  text-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
 }
 
 .module-select {
-  background: #111;
-  color: #0f0;
-  border: 1px solid #333;
-  padding: 0.4rem 0.6rem;
-  font-family: monospace;
+  width: 200px;
+  background: #0f0f0f;
+  color: #00ff9d;
+  border: 1px solid #1f2937;
+  padding: 6px 12px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
+.module-select:hover {
+  border-color: #00ff9d;
+}

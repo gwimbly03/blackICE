@@ -1,23 +1,62 @@
-import { useEffect, useRef, useState } from "react";
-import AnsiToHtml from "ansi-to-html";
+import { useEffect, useRef } from "react";
+import { Terminal as XTerm } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import "xterm/css/xterm.css";
 
-const ansi = new AnsiToHtml({
-  fg: "#e5e7eb",
-  bg: "#000000",
-  newline: true,
-  escapeXML: true,
-});
-
-export default function Terminal({ module, clearSignal, onReady }) {
-  const [lines, setLines] = useState([]);
-  const [input, setInput] = useState("");
+export default function Terminal({ module, clearSignal, onReady = () => {} }) {
+  const terminalRef = useRef(null);
+  const xtermRef = useRef(null);
+  const fitAddonRef = useRef(null);
   const wsRef = useRef(null);
-  const bottomRef = useRef(null);
 
+  // Terminal initialization
   useEffect(() => {
-    setLines([]);
+    if (!terminalRef.current) return;
+
+    const term = new XTerm({
+      cursorBlink: true,
+      fontFamily: "JetBrains Mono, monospace",
+      fontSize: 16, // increased for readability
+      lineHeight: 1.2,
+
+      theme: {
+        background: "#000000",
+        foreground: "#e5e7eb",
+        cursor: "#00ff9d",
+      },
+
+      scrollback: 3000,
+    });
+    const fitAddon = new FitAddon();
+
+    term.loadAddon(fitAddon);
+    term.open(terminalRef.current);
+    fitAddon.fit();
+
+    xtermRef.current = term;
+    fitAddonRef.current = fitAddon;
+
+    const resizeHandler = () => {
+      requestAnimationFrame(() => fitAddon.fit());
+    };
+
+    window.addEventListener("resize", resizeHandler);
+
+    return () => {
+      window.removeEventListener("resize", resizeHandler);
+      term.dispose();
+    };
+  }, []);
+
+  // WebSocket + module handling
+  useEffect(() => {
+    const term = xtermRef.current;
+    if (!term) return;
+
+    term.clear();
     onReady(false);
 
+    // Cleanup previous websocket + listeners
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
@@ -28,67 +67,55 @@ export default function Terminal({ module, clearSignal, onReady }) {
     const ws = new WebSocket(`ws://127.0.0.1:8000/ws/modules/${module}`);
     wsRef.current = ws;
 
-    ws.onopen = () => {
-      onReady(true);   
+    const handleData = (data) => {
+      const socket = wsRef.current;
+      if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+      if (data === "\r") {
+        socket.send(inputBuffer);
+        term.write("\r\n");
+        inputBuffer = "";
+        return;
+      }
+
+      if (data === "\u007f") {
+        if (inputBuffer.length > 0) {
+          inputBuffer = inputBuffer.slice(0, -1);
+          term.write("\b \b");
+        }
+        return;
+      }
+
+      inputBuffer += data;
+      term.write(data);
     };
 
+    let inputBuffer = "";
+
+    const disposable = term.onData(handleData);
+
+    ws.onopen = () => onReady(true);
+
     ws.onmessage = (e) => {
-      setLines((prev) => [...prev, e.data]);
+      term.write(e.data + "\r\n");
     };
 
     ws.onerror = () => {
-      setLines((prev) => [...prev, "[WebSocket error]"]);
+      term.write("\r\n[WebSocket error]\r\n");
     };
 
-    ws.onclose = () => {
-      onReady(false);
-    };
+    ws.onclose = () => onReady(false);
 
     return () => {
+      disposable.dispose();
       ws.close();
     };
-  }, [module]);
+  }, [module, onReady]);
 
+  // Clear terminal when signal changes
   useEffect(() => {
-    setLines([]);
+    xtermRef.current?.clear();
   }, [clearSignal]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [lines]);
-
-  const sendInput = (e) => {
-    if (e.key === "Enter" && wsRef.current && input.trim()) {
-      wsRef.current.send(input);
-      setLines((prev) => [...prev, `> ${input}`]);
-      setInput("");
-    }
-  };
-
-  return (
-    <div className="terminal">
-      {lines.map((line, i) => (
-        <div
-          key={i}
-          className="terminal-line"
-          dangerouslySetInnerHTML={{
-            __html: ansi.toHtml(line),
-          }}
-        />
-      ))}
-
-      <div className="terminal-input">
-        <span>&gt;</span>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={sendInput}
-          autoFocus
-        />
-      </div>
-
-      <div ref={bottomRef} />
-    </div>
-  );
+  return <div className="terminal" ref={terminalRef} />;
 }
-
