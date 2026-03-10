@@ -1,10 +1,7 @@
-/* ======================
-   Global
-====================== */
-
 html, body, #root {
   height: 100%;
   margin: 0;
+  width: 100%;
 }
 
 body {
@@ -12,10 +9,6 @@ body {
   background: #05070c;
   color: #e5e7eb;
 }
-
-/* ======================
-   App Layout
-====================== */
 
 .app-body {
   height: calc(100vh - 70px); /* subtract navbar height */
