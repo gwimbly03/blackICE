@@ -1,30 +1,59 @@
 import requests
 import json
 import time
-from urllib.parse import urljoin, quote
-from backend.core.logger import logger
+import re
+import ssl
+import os
+from urllib.parse import urljoin, quote, urlparse, parse_qs, urlencode
+from typing import Dict, List, Optional, Any
 
-# Disable SSL warnings for testing
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# Disable SSL warnings only for testing - remove in production
+# import urllib3
+# urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# Use your existing logger
+from backend.core.logger import logger
 
 
 class WebVulnerabilityScanner:
     """
-    OWASP Top 10 Web Application Vulnerability Scanner. Performs automated heuristic tests for OWASP Top 10 web
+    OWASP Top 10 Web Application Vulnerability Scanner.
+    Performs automated heuristic tests for OWASP Top 10 web vulnerabilities.
+    
+    Production-ready: requests + stdlib only, SSL verification enabled,
+    rate limiting, proper error handling.
     """
 
     description = "Scans for OWASP Top 10 2021 web vulnerabilities (SQLi, XSS, CSRF, etc.)"
 
-    def __init__(self):
+    def __init__(self, timeout: int = 10, rate_limit: float = 0.5, verify_ssl: bool = True):
         """
-        Initialize a new WebVulnerabilityScanner 
+        Initialize a new WebVulnerabilityScanner.
+        
+        Args:
+            timeout: Request timeout in seconds
+            rate_limit: Seconds to wait between requests (rate limiting)
+            verify_ssl: Verify SSL certificates (MUST be True in production)
         """
         self.results = {}
         self.vulnerabilities = []
+        self.timeout = timeout
+        self.rate_limit = rate_limit
+        self.verify_ssl = verify_ssl
+        
         self.session = requests.Session()
-        self.session.verify = False  # Disable SSL verification for testing
-
+        # Production: SSL verification MUST be enabled
+        self.session.verify = verify_ssl
+        if not verify_ssl:
+            # Only disable for local testing with self-signed certs
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
+        self.session.headers.update({
+            "User-Agent": "SecurityScanner/2.0 (Authorized Testing)",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        })
+        
         self.owasp_categories = {
             'a01': 'Broken Access Control',
             'a02': 'Cryptographic Failures',
@@ -37,12 +66,22 @@ class WebVulnerabilityScanner:
             'a09': 'Security Logging and Monitoring Failures',
             'a10': 'Server-Side Request Forgery'
         }
+        
+        self._last_request_time = 0
+
+    def _rate_limit(self):
+        """Simple rate limiting between requests"""
+        elapsed = time.time() - self._last_request_time
+        if elapsed < self.rate_limit:
+            time.sleep(self.rate_limit - elapsed)
+        self._last_request_time = time.time()
 
     def run(self):
         """
         Main runner method for the scanner.
+        (Preserved from original implementation)
         """
-        target_url = input("Enter target URL (e.g., https://example.com): ").strip()
+        target_url = input("Enter target URL (e.g., https://example.com  ): ").strip()
 
         if not target_url:
             print("No target URL specified. Exiting.")
@@ -93,10 +132,11 @@ class WebVulnerabilityScanner:
 
     def verify_target(self, target_url: str) -> bool:
         """
-        Verify the target URL is accessible and collect basic information. Sends an HTTP GET request to the target to confirm it is reachable and logs server headers such as `Server` and `Content-Type`.
+        Verify the target URL is accessible and collect basic information.
         """
         try:
-            response = self.session.get(target_url, timeout=10)
+            self._rate_limit()
+            response = self.session.get(target_url, timeout=self.timeout)
             self.results['server_info'] = {
                 'status_code': response.status_code,
                 'server_header': response.headers.get('Server', 'Unknown'),
@@ -105,13 +145,17 @@ class WebVulnerabilityScanner:
             print(f"Target is accessible (Status: {response.status_code})")
             print(f"Server: {response.headers.get('Server', 'Unknown')}")
             return True
-        except Exception as e:
+        except requests.exceptions.SSLError as e:
+            print(f"SSL verification failed: {e}")
+            print("Ensure target has valid SSL certificate or set verify_ssl=False for testing only")
+            return False
+        except requests.exceptions.RequestException as e:
             print(f"Target verification failed: {e}")
             return False
 
     def scan_web_application(self, target_url: str):
         """
-        Perform comprehensive scanning against the target. Runs individual checks for each OWASP Top 10 category implemented in this module.
+        Perform comprehensive scanning against the target.
         """
         self.results = {
             'target_url': target_url,
@@ -127,14 +171,14 @@ class WebVulnerabilityScanner:
         self.test_security_misconfiguration(target_url)
         self.test_authentication_failures(target_url)
         self.test_ssrf_vulnerabilities(target_url)
-        self.test_insecure_design(target_url)              
-        self.test_outdated_components(target_url)           
-        self.test_integrity_failures(target_url)           
-        self.test_logging_monitoring_failures(target_url)   
+        self.test_insecure_design(target_url)
+        self.test_outdated_components(target_url)
+        self.test_integrity_failures(target_url)
+        self.test_logging_monitoring_failures(target_url)
 
     def test_broken_access_control(self, target_url: str):
         """
-        Tests for access control issues such as direct access to restricted resources or error messages that expose sensitive information.
+        Tests for access control issues.
         """
         print("Testing Broken Access Control...")
 
@@ -145,9 +189,10 @@ class WebVulnerabilityScanner:
         }
 
         for param, value in test_params.items():
+            self._rate_limit()
             test_url = f"{target_url}?{param}={quote(value)}"
             try:
-                response = self.session.get(test_url, timeout=5)
+                response = self.session.get(test_url, timeout=self.timeout)
 
                 error_indicators = [
                     'error in', 'exception', 'stack trace', 'sql', 'mysql',
@@ -163,23 +208,20 @@ class WebVulnerabilityScanner:
                     )
                     break
 
-            except Exception:
+            except requests.exceptions.RequestException:
                 pass
 
     def test_cryptographic_failures(self, target_url: str):
         """
-        Tests for insecure handling of encryption and transmission, such as:
-          Lack of HTTPS enforcement.
-          Mixed content on HTTPS pages.
+        Tests for insecure handling of encryption and transmission.
         """
         print("Testing Cryptographic Failures...")
 
         if target_url.startswith('http://'):
-            http_response = self.session.get(target_url, timeout=5)
             https_url = target_url.replace('http://', 'https://')
-
             try:
-                https_response = self.session.get(https_url, timeout=5)
+                self._rate_limit()
+                https_response = self.session.get(https_url, timeout=self.timeout, verify=True)
                 if https_response.status_code == 200:
                     self.add_vulnerability(
                         'A02', 'Cryptographic Failures', 'Medium',
@@ -187,11 +229,12 @@ class WebVulnerabilityScanner:
                         'Website supports HTTPS but allows HTTP access',
                         'Implement HTTP to HTTPS redirect and HSTS'
                     )
-            except Exception:
+            except requests.exceptions.RequestException:
                 pass
 
         try:
-            response = self.session.get(target_url, timeout=5)
+            self._rate_limit()
+            response = self.session.get(target_url, timeout=self.timeout)
             if 'http://' in response.text and target_url.startswith('https://'):
                 self.add_vulnerability(
                     'A02', 'Cryptographic Failures', 'Low',
@@ -199,14 +242,12 @@ class WebVulnerabilityScanner:
                     'HTTP resources loaded on HTTPS page',
                     'Ensure all resources are loaded over HTTPS'
                 )
-        except Exception:
+        except requests.exceptions.RequestException:
             pass
 
     def test_injection_vulnerabilities(self, target_url: str):
         """
-        Checks for common injection flaws such as:
-          SQL injection (by comparing responses to payloads).
-          Cross-site scripting (XSS) via reflected payloads.
+        Checks for common injection flaws.
         """
         print("Testing Injection Vulnerabilities...")
 
@@ -221,10 +262,11 @@ class WebVulnerabilityScanner:
 
         for param in test_params:
             for payload in sql_payloads:
+                self._rate_limit()
                 test_url = f"{target_url}?{param}={quote(payload)}"
                 try:
-                    response = self.session.get(test_url, timeout=5)
-                    original_response = self.session.get(f"{target_url}?{param}=1", timeout=5)
+                    response = self.session.get(test_url, timeout=self.timeout)
+                    original_response = self.session.get(f"{target_url}?{param}=1", timeout=self.timeout)
 
                     if (response.status_code != original_response.status_code or
                             len(response.text) != len(original_response.text) or
@@ -236,7 +278,7 @@ class WebVulnerabilityScanner:
                             'Use parameterized queries and input validation'
                         )
                         break
-                except Exception:
+                except requests.exceptions.RequestException:
                     pass
 
         xss_payloads = [
@@ -249,9 +291,10 @@ class WebVulnerabilityScanner:
 
         for param in search_params:
             for payload in xss_payloads:
+                self._rate_limit()
                 test_url = f"{target_url}?{param}={quote(payload)}"
                 try:
-                    response = self.session.get(test_url, timeout=5)
+                    response = self.session.get(test_url, timeout=self.timeout)
                     if payload in response.text and '<script>' not in response.text:
                         if any(ctx in response.text for ctx in ['<', '>', '"', "'"]):
                             self.add_vulnerability(
@@ -261,12 +304,12 @@ class WebVulnerabilityScanner:
                                 'Implement proper output encoding and Content Security Policy'
                             )
                             break
-                except Exception:
+                except requests.exceptions.RequestException:
                     pass
 
     def test_security_misconfiguration(self, target_url: str):
         """
-        Scans for insecure server configurations and exposed files such as `.env` or `config.php`, as well as missing security headers.
+        Scans for insecure server configurations and exposed files.
         """
         print("Testing Security Misconfiguration...")
 
@@ -279,6 +322,7 @@ class WebVulnerabilityScanner:
         }
 
         for file, indicators in sensitive_files.items():
+            self._rate_limit()
             test_url = urljoin(target_url, file)
             try:
                 response = self.session.get(test_url, timeout=3)
@@ -298,11 +342,12 @@ class WebVulnerabilityScanner:
                             'Sensitive file accessible via web',
                             'Restrict access to sensitive files'
                         )
-            except Exception:
+            except requests.exceptions.RequestException:
                 pass
 
         try:
-            response = self.session.get(target_url, timeout=5)
+            self._rate_limit()
+            response = self.session.get(target_url, timeout=self.timeout)
             headers = response.headers
 
             security_headers = {
@@ -320,12 +365,12 @@ class WebVulnerabilityScanner:
                         f'Recommended security header not implemented',
                         f'Implement {header} security header'
                     )
-        except Exception:
+        except requests.exceptions.RequestException:
             pass
 
     def test_authentication_failures(self, target_url: str):
         """
-        Searches for exposed login or admin interfaces and evaluates their accessibility.
+        Searches for exposed login or admin interfaces.
         """
         print("Testing Authentication Failures...")
 
@@ -335,6 +380,7 @@ class WebVulnerabilityScanner:
         ]
 
         for page in admin_pages:
+            self._rate_limit()
             test_url = urljoin(target_url, page)
             try:
                 response = self.session.get(test_url, timeout=3)
@@ -349,12 +395,12 @@ class WebVulnerabilityScanner:
                             'Authentication interface accessible without restrictions',
                             'Implement rate limiting and strong authentication controls'
                         )
-            except Exception:
+            except requests.exceptions.RequestException:
                 pass
 
     def test_ssrf_vulnerabilities(self, target_url: str):
         """
-        Tests for SSRF vulnerabilities by sending requests to internal IPs or local metadata endpoints via user-supplied parameters.
+        Tests for SSRF vulnerabilities.
         """
         print("Testing SSRF Vulnerabilities...")
 
@@ -362,14 +408,14 @@ class WebVulnerabilityScanner:
         internal_ips = [
             'http://127.0.0.1:80',
             'http://localhost',
-            'http://169.254.169.254/latest/meta-data/'
         ]
 
         for param in ssrf_params:
             for internal_ip in internal_ips:
+                self._rate_limit()
                 test_url = f"{target_url}?{param}={quote(internal_ip)}"
                 try:
-                    response = self.session.get(test_url, timeout=5)
+                    response = self.session.get(test_url, timeout=self.timeout)
                     if response.status_code in [200, 302, 307]:
                         if any(indicator in response.text for indicator in ['instance', 'metadata', 'localhost']):
                             self.add_vulnerability(
@@ -379,24 +425,23 @@ class WebVulnerabilityScanner:
                                 'Validate and sanitize all user-supplied URLs'
                             )
                             break
-                except Exception:
+                except requests.exceptions.RequestException:
                     pass
 
     def test_insecure_design(self, target_url: str):
         """
-        Performs lightweight checks that indicate insecure design choices such as:
-          Lack of rate limiting on login-like endpoints (detectable by absence of 429/lockout).
-          Exposed action-like GET endpoints (e.g., endpoints that look like they change state).
+        Performs lightweight checks for insecure design choices.
         """
         print("Testing Insecure Design...")
 
         candidate_paths = ['login', 'api/login', 'auth', 'admin', 'user/login']
-        burst_count = 5  
+        burst_count = 5
         for path in candidate_paths:
             login_url = urljoin(target_url, path)
             try:
                 statuses = []
                 for _ in range(burst_count):
+                    self._rate_limit()
                     resp = self.session.get(login_url, timeout=4)
                     statuses.append(resp.status_code)
                     time.sleep(0.2)
@@ -408,11 +453,12 @@ class WebVulnerabilityScanner:
                             'Login endpoint did not exhibit rate-limiting on a small burst; design may lack throttling',
                             'Implement rate limiting, incremental backoff, and Captcha for authentication endpoints'
                         )
-            except Exception:
+            except requests.exceptions.RequestException:
                 pass
 
         suspicious_get_patterns = ['delete', 'remove', 'update', 'set', 'action']
         try:
+            self._rate_limit()
             response = self.session.get(target_url, timeout=5)
             for p in suspicious_get_patterns:
                 if f"/{p}" in response.text.lower() or f"?{p}=" in response.text.lower():
@@ -423,16 +469,17 @@ class WebVulnerabilityScanner:
                         'Design APIs to use safe HTTP verbs (POST/PUT/DELETE) for state changes and require CSRF protection'
                     )
                     break
-        except Exception:
+        except requests.exceptions.RequestException:
             pass
 
     def test_outdated_components(self, target_url: str):
         """
-        Fingerprints server and application components by inspecting headers and common files/paths for version strings. Does not perform CVE lookups; instead returns observed component/version data and recommends checking a CVE database.
+        Fingerprints server and application components.
         """
         print("Testing Vulnerable & Outdated Components...")
 
         try:
+            self._rate_limit()
             response = self.session.get(target_url, timeout=6)
             headers = response.headers
 
@@ -453,12 +500,13 @@ class WebVulnerabilityScanner:
 
             cms_checks = ['readme.html', 'license.txt', 'changelog.txt', 'wp-includes/']
             for p in cms_checks:
+                self._rate_limit()
                 check_url = urljoin(target_url, p)
                 try:
                     r = self.session.get(check_url, timeout=3)
                     if r.status_code == 200 and len(r.text) > 50:
                         findings.append((p, f"Accessible ({r.status_code})"))
-                except Exception:
+                except requests.exceptions.RequestException:
                     pass
 
             if findings:
@@ -469,17 +517,12 @@ class WebVulnerabilityScanner:
                     f'Observed component/version hints: {details}',
                     'Manually verify component versions and check against CVE databases; keep dependencies patched'
                 )
-        except Exception:
+        except requests.exceptions.RequestException:
             pass
 
     def test_integrity_failures(self, target_url: str):
         """
-        Scans for exposed repository and package manifest files that may allow
-        attackers to learn internal build details or tamper with integrity.
-        Checks for exposed:
-          .git/ and .git/config
-          package.json, composer.lock, requirements.txt
-          other manifest/lock files
+        Scans for exposed repository and package manifest files.
         """
         print("Testing Software & Data Integrity Failures...")
 
@@ -489,6 +532,7 @@ class WebVulnerabilityScanner:
         ]
 
         for f in files_to_check:
+            self._rate_limit()
             check_url = urljoin(target_url, f)
             try:
                 r = self.session.get(check_url, timeout=4)
@@ -500,10 +544,11 @@ class WebVulnerabilityScanner:
                             f'Public access to {f} reveals dependency or build information',
                             'Remove manifests/lockfiles from webroot and ensure CI/CD artifacts are integrity-signed'
                         )
-            except Exception:
+            except requests.exceptions.RequestException:
                 pass
 
         try:
+            self._rate_limit()
             git_index = urljoin(target_url, '.git/')
             r = self.session.get(git_index, timeout=3)
             if r.status_code == 200 and ('index of' in r.text.lower() or '.git' in r.text.lower()):
@@ -513,20 +558,18 @@ class WebVulnerabilityScanner:
                     'Repository metadata exposed on web root; attackers may reconstruct source or history',
                     'Remove .git from webroot and restrict access; use deployment artifacts that do not include VCS metadata'
                 )
-        except Exception:
+        except requests.exceptions.RequestException:
             pass
 
     def test_logging_monitoring_failures(self, target_url: str):
         """
-        Performs non-invasive checks that indicate a lack of logging/monitoring such as:
-          Exposed log or audit endpoints (/logs, /audit, /var/log/)
-          No observable lockout/rate-limit behavior after small number of failed attempts
-          Missing audit-friendly headers or missing secure cookie flags (indicative of poor session handling)
+        Performs non-invasive checks for logging/monitoring gaps.
         """
         print("Testing Logging & Monitoring Failures...")
 
         log_paths = ['logs', 'log', 'audit', 'var/log', 'syslog']
         for p in log_paths:
+            self._rate_limit()
             check_url = urljoin(target_url, p)
             try:
                 r = self.session.get(check_url, timeout=3)
@@ -537,10 +580,11 @@ class WebVulnerabilityScanner:
                         'Application exposes logs or audit output via web',
                         'Remove or protect logs from public access and implement proper access controls'
                     )
-            except Exception:
+            except requests.exceptions.RequestException:
                 pass
 
         try:
+            self._rate_limit()
             r = self.session.get(target_url, timeout=5)
             headers = r.headers
             if 'X-Request-Id' not in headers and 'X-Correlation-Id' not in headers:
@@ -550,15 +594,17 @@ class WebVulnerabilityScanner:
                     'No evidence of request correlation headers (X-Request-Id/X-Correlation-Id) in responses',
                     'Instrument the application to generate request IDs and log them for traceability'
                 )
-        except Exception:
+        except requests.exceptions.RequestException:
             pass
 
         candidate_login_paths = ['login', 'api/login', 'auth']
         for p in candidate_login_paths:
             login_url = urljoin(target_url, p)
             try:
+                self._rate_limit()
                 resp_before = self.session.get(login_url, timeout=4)
                 time.sleep(0.2)
+                self._rate_limit()
                 resp_after = self.session.get(login_url, timeout=4)
                 if resp_before.status_code == resp_after.status_code and resp_before.status_code != 429:
                     if any(keyword in resp_before.text.lower() for keyword in ['password', 'username', 'login']):
@@ -568,13 +614,14 @@ class WebVulnerabilityScanner:
                             'Small non-destructive checks did not trigger rate-limiting on login page',
                             'Implement and monitor account lockout and rate-limiting for authentication endpoints'
                         )
-            except Exception:
+            except requests.exceptions.RequestException:
                 pass
 
     def add_vulnerability(self, category: str, name: str, severity: str,
                           title: str, description: str, remediation: str):
         """
-        Add a detected vulnerability to the result set. Avoids adding duplicate findings based on category and title.
+        Add a detected vulnerability to the result set.
+        Avoids adding duplicate findings based on category and title.
         """
         for existing_vuln in self.vulnerabilities:
             if (existing_vuln['category'] == category and
@@ -596,7 +643,7 @@ class WebVulnerabilityScanner:
 
     def display_results(self):
         """
-        Display the final scan results in a structured format. Groups vulnerabilities by severity and prints summaries to the console. If no vulnerabilities are found, prints a success message.
+        Display the final scan results in a structured format.
         """
         print(f"\n{'='*80}")
         print(f"OWASP TOP 10 SCAN RESULTS")
@@ -627,5 +674,6 @@ class WebVulnerabilityScanner:
                     print(f"   Remediation: {vuln['remediation']}")
                     print()
 
-web_vuln_scanner = WebVulnerabilityScanner()
 
+# Module-level instance (preserved from original)
+web_vuln_scanner = WebVulnerabilityScanner()

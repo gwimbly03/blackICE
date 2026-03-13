@@ -83,11 +83,14 @@ def main():
             "dns_enum", "subdomain_scan"
         ]},
         "2": {"name": "Vulnerability Assessment", "modules": [
-            "network_segment", "ssl_scan", "web_vuln_scan", "firewall_ruleset"
+            "ssl_scan", "web_vuln_scan"
         ]},
         "3": {"name": "Wireless", "modules": [
             "dns_cache_poisoning", "ddos_attacks", "arp_spoofing"
         ]},
+        "4": {"name": "Network", "modules": [
+            "network_segment", "firewall_ruleset", "network_topo"
+            ]},
         "6": {"name": "Reporting", "modules": [
             "compliance_check", "linux_baseline_scanner", "cve_search"
         ]}
