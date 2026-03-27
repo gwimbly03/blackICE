@@ -24,6 +24,12 @@ pkgs.mkShell {
     pkgs.python314Packages.fastapi
     pkgs.python314Packages.uvicorn
     pkgs.python314Packages.websockets
+    pkgs.python314Packages.beautifulsoup4
+    pkgs.python314Packages.playwright
+    pkgs.python314Packages.dateutils
+    pkgs.python314Packages.networkx
+    pkgs.python314Packages.matplotlib
+    pkgs.python314Packages.pysnmp
 
     pkgs.nodejs_25
 

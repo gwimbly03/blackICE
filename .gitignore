@@ -6,3 +6,4 @@ reports/
 logs/
 baseline/
 node_modules/
+logger.yaml

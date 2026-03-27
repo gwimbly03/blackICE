@@ -16,7 +16,9 @@ Advanced, modular pentesting engine written in Python, a collection of scanners 
 - [Directory layout](#directory-layout)
 - [What I delivered in Milestone 1](#what-i-delivered-in-milestone-1)  
 - [What I delivered in Milestone 2](#what-i-delivered-in-milestone-2)  
-- [What I delivered in Milestone 3](#what-i-delivered-in-milestone-3)  
+- [What I delivered in Milestone 3](#what-i-delivered-in-milestone-3)
+- [What I delivered in Milestone 4](#what-i-delivered-in-milestone-4)  
+
 
 ---
 ## Features (What has been implemented so far)
@@ -229,3 +231,12 @@ Notifiactions that notify the user by email and on the terminal about when a mod
 * Ensured clean cleanup of tasks, WebSockets, and internal state after module execution.
 * Build a web UI to view all discovered modules, select and switch between modules and start and stop modules via UI controls
 * Handle module switching and completion gracefully without crashing or desyncing and integrated ANSI-to-HTML conversion for readable terminal output in the browser.
+
+---
+
+## What I delivered in Milestone 4
+
+* Fix the webui to look nicer using xterm for console output.
+* Added a network segmentation module.
+* Changed the catagories for the modules for easier navigation.
+8 Started Docker and Nix deployment partly finished 

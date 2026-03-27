@@ -1,11 +1,9 @@
-import "./nav.css";
-
 export default function Navbar({ modules, selected, onSelect }) {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <span className="brand">BlackICE</span>
-
+        <div className="brand">BlackICE</div>
+        
         <select
           className="module-select"
           value={selected || ""}
@@ -24,4 +22,3 @@ export default function Navbar({ modules, selected, onSelect }) {
     </nav>
   );
 }
-

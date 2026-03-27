@@ -59,7 +59,7 @@ def print_banner():
 ║  ╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝ ╚═════╝╚══════╝  ║
 ╚═══════════════════════════════════════════════════════════════╝
           BLACKICE - Intrusion Countermeasures
-                 Version 0.2 - Alpha
+                         Version 0.4 
 """)
 
 
@@ -83,11 +83,14 @@ def main():
             "dns_enum", "subdomain_scan"
         ]},
         "2": {"name": "Vulnerability Assessment", "modules": [
-            "vuln_scan", "ssl_scan", "web_vuln_scan"
+            "ssl_scan", "web_vuln_scan"
         ]},
         "3": {"name": "Wireless", "modules": [
             "dns_cache_poisoning", "ddos_attacks", "arp_spoofing"
         ]},
+        "4": {"name": "Network", "modules": [
+            "network_segment", "firewall_ruleset", "network_topo"
+            ]},
         "6": {"name": "Reporting", "modules": [
             "compliance_check", "linux_baseline_scanner", "cve_search"
         ]}
