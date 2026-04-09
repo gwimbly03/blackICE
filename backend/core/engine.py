@@ -1,5 +1,8 @@
 import importlib
 import os
+import re
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from backend.core.logger import logger
 
 # Resolve modules directory robustly
