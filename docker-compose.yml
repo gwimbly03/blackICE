@@ -12,7 +12,15 @@ services:
       context: ./frontend
     container_name: react_frontend
     ports:
-      - "3000:3000"
+      - "3000:80"
     depends_on:
       - backend
     restart: unless-stopped
+
+  cli:
+    build:
+      context: ./backend
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python main.py
