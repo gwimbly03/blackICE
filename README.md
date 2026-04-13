@@ -17,7 +17,8 @@ Advanced, modular pentesting engine written in Python, a collection of scanners 
 - [What I delivered in Milestone 1](#what-i-delivered-in-milestone-1)  
 - [What I delivered in Milestone 2](#what-i-delivered-in-milestone-2)  
 - [What I delivered in Milestone 3](#what-i-delivered-in-milestone-3)
-- [What I delivered in Milestone 4](#what-i-delivered-in-milestone-4)  
+- [What I delivered in Milestone 4](#what-i-delivered-in-milestone-4)
+- [What I delivered in Milestone 5](#what-i-delivered-in-milestone-5)  
 
 
 ---
@@ -239,4 +240,13 @@ Notifiactions that notify the user by email and on the terminal about when a mod
 * Fix the webui to look nicer using xterm for console output.
 * Added a network segmentation module.
 * Changed the catagories for the modules for easier navigation.
-8 Started Docker and Nix deployment partly finished 
+8 Started Docker and Nix deployment partly finished
+
+---
+
+## What I delivered in Milestone 4
+
+* Fixed some bugs to work with both docker and nix
+* Created a docker compose file allowing for deployment on any OS
+* Created a nix deployment for deployment on any system using the Nix package manager
+
